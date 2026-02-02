@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { PathItem } from "../lib/api";
+import type { PathItem } from "../types";
 
 export default function Breadcrumbs({ path }: { path: PathItem[] }) {
   if (!path?.length) return null;

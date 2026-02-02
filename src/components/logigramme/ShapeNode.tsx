@@ -1,6 +1,7 @@
 import { Handle, Position } from "reactflow";
+import type { Shape } from "../../types";
 
-export type Shape = "rectangle" | "diamond" | "circle" | "diamond-x";
+export type { Shape };
 
 function px(n: unknown, fallback: number) {
   const v = typeof n === "number" ? n : Number(n);

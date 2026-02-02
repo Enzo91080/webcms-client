@@ -9,7 +9,8 @@ import {
 import { Alert, Avatar, Badge, Button, Card, Col, Divider, Modal, Row, Space, Tag, Typography } from "antd";
 import { useState } from "react";
 import LogigrammeViewer from "./logigramme/LogigrammeViewer";
-import { SipocVisioTable } from "./SipocVisioTable";
+import { SipocVisioTable } from "./sipoc/SipocVisioTable";
+
 
 type ProcessPreviewData = {
   code: string;
@@ -28,6 +29,7 @@ type ReferenceDoc = {
   type?: string;
   url?: string;
 };
+
 
 function processBadgeFromCode(code: string) {
   return `PR-${code}-01`;

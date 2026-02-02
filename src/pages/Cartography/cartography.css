@@ -1,0 +1,195 @@
+/* ---------------------------------------------------------------------------
+   Cartography styles (refactored for clarity)
+   - Preserves exact visual values and breakpoints
+   - Grouped by purpose: variables, layout, stage, panels, chain, tiles
+   ------------------------------------------------------------------------ */
+
+:root {
+  --carto-shadow-1: 0 12px 22px rgba(0, 0, 0, 0.10);
+  --carto-shadow-2: 0 12px 20px rgba(0, 0, 0, 0.14);
+  --carto-shadow-3: 0 12px 20px rgba(0, 0, 0, 0.12);
+  --carto-shadow-hover: 0 16px 26px rgba(0, 0, 0, 0.16);
+}
+
+/* Centre reuse */
+.pageCenter {
+  @apply min-h-[60vh] grid place-items-center px-6;
+}
+
+/* Page container */
+.cartoPage {
+  @apply min-h-[100dvh] grid place-items-center px-6 py-8;
+}
+
+.cartoWrap {
+  @apply w-full max-w-[1240px];
+}
+
+/* Stage (card) - fixed dimensions with responsive adjustments */
+.cartoStage {
+  @apply relative w-full overflow-hidden rounded-[18px] p-[26px] bg-white;
+  height: 520px;
+}
+
+@media (max-width: 1100px) {
+  .cartoStage {
+    height: 560px;
+  }
+}
+
+@media (max-width: 900px) {
+  .cartoStage {
+    height: 620px;
+  }
+}
+
+/* Side panels (left/right) */
+.sidePanel {
+  @apply absolute top-[80px] w-[240px] h-[360px] rounded-[18px] grid place-items-center;
+  box-shadow: var(--carto-shadow-1);
+}
+
+@media (max-width: 1100px) {
+  .sidePanel {
+    width: 200px;
+  }
+}
+
+@media (max-width: 900px) {
+  .sidePanel {
+    display: none;
+  }
+}
+
+.sidePanelLeft {
+  @apply left-[10px] bg-[#d9eaf8];
+}
+
+.sidePanelRight {
+  @apply right-[10px] bg-[#f7d3d3];
+}
+
+.sidePanelText {
+  /* writing-mode + rotation for vertical text */
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  @apply font-bold tracking-[1px] opacity-85 text-slate-800;
+}
+
+/* Small info boxes */
+.smallBox {
+  @apply absolute bottom-[22px] w-[170px] rounded-[14px] bg-[#d9eaf8] p-[12px_14px];
+  box-shadow: var(--carto-shadow-1);
+}
+
+@media (max-width: 900px) {
+  .smallBox {
+    display: none;
+  }
+}
+
+.smallBoxLeft {
+  @apply left-[38px];
+}
+
+.smallBoxRight {
+  @apply right-[38px];
+}
+
+/* Chain outer (central rounded container) */
+.chainOuter {
+  @apply absolute top-[94px] left-1/2 -translate-x-1/2 h-[300px] rounded-[170px] bg-transparent;
+  @apply border-[4px] border-[#39b54a] px-[56px] pt-[52px] pb-[42px] box-border;
+  width: min(820px, calc(100% - 520px));
+}
+
+@media (max-width: 1100px) {
+  .chainOuter {
+    width: min(760px, calc(100% - 440px));
+  }
+}
+
+@media (max-width: 900px) {
+  .chainOuter {
+    width: min(820px, 100%);
+  }
+}
+
+/* Manager pill (centered) */
+.managerPill {
+  @apply absolute top-[-20px] left-1/2 -translate-x-1/2;
+  @apply bg-[#10b851] text-white rounded-full px-[40px] py-[10px];
+  @apply font-extrabold tracking-[2px] uppercase no-underline;
+  @apply hover:brightness-105 active:brightness-95;
+  @apply focus:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/20;
+  box-shadow: var(--carto-shadow-2);
+}
+
+.managerPillDisabled {
+  @apply cursor-default opacity-85;
+}
+
+/* Title bar */
+.titleBar {
+  @apply mx-auto rounded-[14px] bg-[#2f63cc] text-white;
+  @apply px-[14px] py-[12px] text-center font-extrabold tracking-[2px] uppercase;
+  width: min(560px, 100%);
+  box-shadow: var(--carto-shadow-2);
+}
+
+/* Tiles row */
+.tilesRow {
+  @apply mt-[26px] flex flex-nowrap justify-center gap-[16px];
+}
+
+/* Tile base */
+.processTile {
+  @apply grid place-items-center h-[72px] w-[120px] rounded-[12px];
+  @apply font-extrabold no-underline transition-transform duration-150;
+  @apply hover:-translate-y-[2px];
+  color: #111;
+  box-shadow: var(--carto-shadow-3);
+}
+
+.processTile:hover {
+  box-shadow: var(--carto-shadow-hover);
+}
+
+.tileText {
+  @apply text-center px-[10px] leading-[1.15];
+}
+
+/* Shapes (clip-path for tile shapes) */
+.tileFirst {
+  clip-path: polygon(0 0, 100% 0, 92% 100%, 0 100%);
+}
+
+.tileMid {
+  clip-path: polygon(8% 0, 100% 0, 92% 100%, 0 100%);
+}
+
+.tileLast {
+  clip-path: polygon(8% 0, 100% 0, 100% 100%, 0 100%);
+}
+
+/* Color variants */
+.p02 {
+  @apply bg-[#f1d9c2];
+}
+
+.p03 {
+  @apply bg-[#f2c9f1];
+}
+
+.p04 {
+  @apply bg-[#18a0ff] text-white;
+  width: 140px;
+}
+
+.p05 {
+  @apply bg-[#dfe5ef];
+}
+
+.p06 {
+  @apply bg-[#d9f0b9];
+}

@@ -1,6 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { clearToken, getToken, setToken } from "../../lib/auth";
-import { login as apiLogin, me as apiMe } from "../../lib/api";
+import { clearToken, getToken, setToken, login as apiLogin, me as apiMe } from "../../api";
 
 type User = { email: string; role: "admin"; name?: string } | null;
 

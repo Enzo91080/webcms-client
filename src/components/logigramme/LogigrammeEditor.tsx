@@ -31,14 +31,10 @@ import ReactFlow, {
   NodeChange,
   ReactFlowInstance,
 } from "reactflow";
-import { saveLogigramme } from "../../lib/api";
+import { saveLogigramme } from "../../api";
+import type { Shape, SipocRow } from "../../types";
 import OrthogonalEdge from "./OrthogonalEdge";
-import ShapeNode, { Shape } from "./ShapeNode";
-
-type SipocRow = {
-  ref?: string;
-  designation?: { name?: string; url?: string };
-};
+import ShapeNode from "./ShapeNode";
 
 type LegendItem = {
   key: string;

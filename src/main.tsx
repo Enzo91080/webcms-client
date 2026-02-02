@@ -4,8 +4,13 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import "reactflow/dist/style.css";
 import App from "./App";
+import { getToken, setTokenGetter } from "./api";
 import { AuthProvider } from "./components/admin/AuthProvider";
+import "./styles/fonts.css";
 import "./styles/global.css";
+
+// Initialize API client with token getter
+setTokenGetter(getToken);
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

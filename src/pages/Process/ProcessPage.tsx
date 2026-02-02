@@ -27,23 +27,10 @@ import {
 } from "antd";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import LogigrammeViewer from "../components/logigramme/LogigrammeViewer";
-import { SipocVisioTable } from "../components/SipocVisioTable";
-import {
-  getCartography,
-  getPath,
-  getProcessByCode,
-  ProcessFull,
-  ProcessLite,
-} from "../lib/api";
-
-type PathItem = {
-  id: string;
-  code: string;
-  name: string;
-  parentProcessId: string | null;
-  orderInParent: number;
-};
+import LogigrammeViewer from "../../components/logigramme/LogigrammeViewer";
+import { SipocVisioTable } from "../../components/sipoc/SipocVisioTable";
+import { getCartography, getPath, getProcessByCode } from "../../api";
+import type { ProcessFull, ProcessLite, PathItem } from "../../types";
 
 type ReferenceDoc = {
   code: string;
@@ -309,7 +296,7 @@ export default function ProcessPage() {
         <Card
           bordered={false}
           style={{
-            background: "linear-gradient(135deg,rgb(96, 96, 96) 0%,rgb(66, 66, 67) 50%,rgb(74, 74, 74) 100%)",
+            background: "linear-gradient(135deg,#0069c8 0%,#0069c8 50%,rgb(2, 80, 152) 100%)",
             marginBottom: 24,
             borderRadius: 12
           }}
@@ -319,7 +306,7 @@ export default function ProcessPage() {
             <Row gutter={24} align="middle" wrap>
               <Col flex="auto">
                 <div>
-                  <Typography.Title level={2} style={{ margin: 0, color: "white", fontSize: 28, fontWeight: 800 }}>
+                  <Typography.Title level={2} style={{ margin: 0, color: "white", fontSize: 28, fontWeight: 800, fontFamily: "Akrobat", letterSpacing: 1.2, textTransform: "uppercase" }}>
                     Processus {process.name}
                   </Typography.Title>
                   <Typography.Text style={{ color: "rgba(255,255,255,0.8)", fontSize: 14, marginTop: 8, display: "block" }}>
@@ -552,7 +539,7 @@ export default function ProcessPage() {
                     size="small"
                     style={{ background: "linear-gradient(135deg, #eff6ff, #dbeafe)", color: "#2563eb" }}
                   />
-                  <Typography.Title level={4} style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>
+                  <Typography.Title level={4} style={{ margin: 0, fontSize: 18, fontWeight: 700, fontFamily: "Akrobat" }}>
                     Logigramme du processus
                   </Typography.Title>
                 </Space>

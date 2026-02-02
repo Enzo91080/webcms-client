@@ -1,0 +1,12 @@
+/* Akrobat (display font)
+   Place your font file here:
+   src/assets/akrobat/Akrobat-Black.otf
+*/
+
+@font-face {
+  font-family: "Akrobat";
+  src: url("../assets/akrobat/Akrobat-Black.otf") format("opentype");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}

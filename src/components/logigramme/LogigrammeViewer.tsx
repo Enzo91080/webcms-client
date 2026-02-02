@@ -1,37 +1,11 @@
 import { useMemo } from "react";
 import ReactFlow, { Background, Controls, Edge, MarkerType, Node } from "reactflow";
+import type { LogiNode, LogiEdge, SipocRow } from "../../types";
 import OrthogonalEdge from "./OrthogonalEdge";
 import ViewShapeNode from "./ViewShapeNode";
 
-type StoredNode = {
-  id: string;
-  sipocRef?: string;
-  shape: "rectangle" | "diamond" | "circle" | "diamond-x";
-  label: string;
-  position?: { x: number; y: number };
-  interaction?: {
-    action: "navigate" | "open" | "tooltip";
-    targetType: "process" | "url";
-    targetProcessId?: string;
-    targetUrl?: string;
-    tooltip?: string;
-  } | null;
-};
-
-type StoredEdge = {
-  id: string;
-  from?: string;
-  to?: string;
-  source?: string;
-  target?: string;
-  label?: string;
-};
-
-export type SipocRow = {
-  ref?: string;
-  numero?: string;
-  designation?: { name?: string; url?: string };
-};
+type StoredNode = LogiNode;
+type StoredEdge = LogiEdge & { source?: string; target?: string };
 
 function normalizeString(x: unknown) {
   return typeof x === "string" ? x.trim() : "";

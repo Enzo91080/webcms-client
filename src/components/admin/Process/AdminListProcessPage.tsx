@@ -15,34 +15,21 @@ import {
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { useEffect, useMemo, useState } from "react";
-import LogigrammeEditor from "../../components/logigramme/LogigrammeEditor";
-import ProcessPreview from "../../components/ProcessPreview"; // ✅ added
-import SipocEditor from "../../components/SipocEditor";
+import LogigrammeEditor from "../../logigramme/LogigrammeEditor";
+import ProcessPreview from "../../ProcessPreview";
+import SipocEditor from "../../sipoc/SipocEditor";
 import {
   adminCreateProcess,
   adminDeleteProcess,
   adminGetProcess,
   adminListProcesses,
+  adminListStakeholders,
   adminPatchProcess,
-} from "../../lib/api";
+  type Stakeholder,
+} from "../../../api";
+import { ProcessFull } from "../../../types";
 
-type Proc = {
-  id: string;
-  code: string;
-  name: string;
-  parentProcessId?: string | null;
-  orderInParent?: number;
-  isActive?: boolean;
 
-  title?: string;
-  objectives?: string;
-  stakeholders?: any[];
-  referenceDocuments?: any[];
-  sipoc?: any;
-  logigramme?: any;
-
-  children?: Proc[];
-};
 
 function getErrorMessage(e: unknown) {
   if (e instanceof Error) return e.message;
@@ -59,12 +46,12 @@ function normalizeDocs(input: any) {
   }));
 }
 
-function buildTree(items: Proc[]) {
-  const nodes = items.map((p) => ({ ...p, children: [] as Proc[] }));
-  const byId = new Map<string, Proc>();
+function buildTree(items: ProcessFull[]) {
+  const nodes = items.map((p) => ({ ...p, children: [] as ProcessFull[] }));
+  const byId = new Map<string, ProcessFull>();
   nodes.forEach((n) => byId.set(n.id, n));
 
-  const roots: Proc[] = [];
+  const roots: ProcessFull[] = [];
   for (const n of nodes) {
     const pid = n.parentProcessId || null;
     const parent = pid ? byId.get(pid) : null;
@@ -72,7 +59,7 @@ function buildTree(items: Proc[]) {
     else roots.push(n);
   }
 
-  const sortRec = (arr: Proc[]) => {
+  const sortRec = (arr: ProcessFull[]) => {
     arr.sort((a, b) => {
       const oa = a.orderInParent ?? 9999;
       const ob = b.orderInParent ?? 9999;
@@ -82,7 +69,7 @@ function buildTree(items: Proc[]) {
     arr.forEach((x) => x.children && x.children.length && sortRec(x.children));
   };
 
-  const pruneEmptyChildren = (n: Proc) => {
+  const pruneEmptyChildren = (n: ProcessFull) => {
     if (!n.children || n.children.length === 0) {
       delete (n as any).children;
       return;
@@ -97,11 +84,12 @@ function buildTree(items: Proc[]) {
 }
 
 export default function AdminProcessesPage() {
-  const [items, setItems] = useState<Proc[]>([]);
+  const [items, setItems] = useState<ProcessFull[]>([]);
   const [loading, setLoading] = useState(false);
+  const [stakeholders, setStakeholders] = useState<Stakeholder[]>([]);
 
   const [open, setOpen] = useState(false);
-  const [editing, setEditing] = useState<Proc | null>(null);
+  const [editing, setEditing] = useState<ProcessFull | null>(null);
   const [activeTab, setActiveTab] = useState<string>("general");
 
   const [form] = Form.useForm();
@@ -110,7 +98,7 @@ export default function AdminProcessesPage() {
     try {
       setLoading(true);
       const res = await adminListProcesses();
-      setItems((res.data || []) as Proc[]);
+      setItems((res.data || []) as ProcessFull[]);
     } catch (e) {
       message.error(getErrorMessage(e));
     } finally {
@@ -118,8 +106,18 @@ export default function AdminProcessesPage() {
     }
   }
 
+  async function loadStakeholders() {
+    try {
+      const res = await adminListStakeholders();
+      setStakeholders((res.data || []).filter((s) => s.isActive));
+    } catch (e) {
+      console.warn("Failed to load stakeholders", e);
+    }
+  }
+
   useEffect(() => {
     reload();
+    loadStakeholders();
   }, []);
 
   const treeData = useMemo(() => buildTree(items), [items]);
@@ -131,6 +129,10 @@ export default function AdminProcessesPage() {
       ...sorted.map((p) => ({ value: p.id, label: `${p.code} — ${p.name}` })),
     ];
   }, [items]);
+
+  const stakeholderOptions = useMemo(() => {
+    return stakeholders.map((s) => ({ value: s.name, label: s.name }));
+  }, [stakeholders]);
 
   function openCreate() {
     setEditing(null);
@@ -151,7 +153,7 @@ export default function AdminProcessesPage() {
     });
   }
 
-  async function openEdit(p: Proc) {
+  async function openEdit(p: ProcessFull) {
     setEditing(p); // optimistic: show drawer immediately
     setActiveTab("general");
     setOpen(true);
@@ -173,7 +175,7 @@ export default function AdminProcessesPage() {
     // then fetch full doc (sipoc/logigramme)
     try {
       const full = await adminGetProcess(p.id);
-      const proc = full.data as Proc;
+      const proc = full.data as ProcessFull;
       setEditing(proc);
       form.setFieldsValue({
         code: proc.code || "",
@@ -223,14 +225,14 @@ export default function AdminProcessesPage() {
       // refresh editing with full doc
       try {
         const full = await adminGetProcess(editing.id);
-        setEditing(full.data as Proc);
+        setEditing(full.data as ProcessFull);
       } catch { }
     } catch (e) {
       message.error(getErrorMessage(e));
     }
   }
 
-  async function doDelete(p: Proc) {
+  async function doDelete(p: ProcessFull) {
     try {
       await adminDeleteProcess(p.id);
       message.success("Supprimé");
@@ -241,14 +243,14 @@ export default function AdminProcessesPage() {
     }
   }
 
-  const columns: ColumnsType<Proc> = [
+  const columns: ColumnsType<ProcessFull> = [
     { title: "Code", dataIndex: "code", key: "code", width: 120 },
     { title: "Nom", dataIndex: "name", key: "name" },
     {
       title: "Parent",
       key: "parent",
       width: 140,
-      render: (_: any, r: Proc) => {
+      render: (_: any, r: ProcessFull) => {
         if (!r.parentProcessId) return <Tag color="blue">Racine</Tag>;
         const parent = items.find((x) => x.id === r.parentProcessId);
         return <span>{parent?.code || "?"}</span>;
@@ -259,7 +261,7 @@ export default function AdminProcessesPage() {
       title: "Actif",
       key: "isActive",
       width: 100,
-      render: (_: any, r: Proc) => (
+      render: (_: any, r: ProcessFull) => (
         <Tag color={r.isActive ? "green" : "default"}>{r.isActive ? "Oui" : "Non"}</Tag>
       ),
     },
@@ -267,7 +269,7 @@ export default function AdminProcessesPage() {
       title: "Actions",
       key: "actions",
       width: 220,
-      render: (_: any, r: Proc) => (
+      render: (_: any, r: ProcessFull) => (
         <Space>
           <Button size="small" onClick={() => openEdit(r)}>
             Éditer
@@ -322,7 +324,8 @@ export default function AdminProcessesPage() {
               label: "Général",
               children: (
                 <Form form={form} layout="vertical">
-                  <div style={{ display: "grid", gridTemplateColumns: "180px 1fr 1fr 140px 120px", gap: 12 }}>
+                  {/* Header fields - Identité du processus */}
+                  <div style={{ display: "grid", gridTemplateColumns: "180px 1fr 1fr 140px 120px", gap: 12, marginBottom: 24 }}>
                     <Form.Item name="code" label="Code" rules={[{ required: true, message: "Code requis" }]}>
                       <Input placeholder="P02 / SP0201 ..." />
                     </Form.Item>
@@ -344,40 +347,33 @@ export default function AdminProcessesPage() {
                     </Form.Item>
                   </div>
 
-                  <Space>
-                    <Button type="primary" onClick={saveBase}>
-                      Enregistrer
-                    </Button>
-                  </Space>
-                </Form>
-              ),
-            },
-            {
-              key: "fiche",
-              label: "Fiche",
-              children: (
-                <Form form={form} layout="vertical">
+                  {/* Description and metadata fields */}
                   <Form.Item name="title" label="Objet du processus">
                     <Input.TextArea rows={3} />
                   </Form.Item>
 
-                  <Form.Item name="objectives" label="Objectives (Markdown)">
-                    <Input.TextArea rows={10} placeholder={"- Objectif 1\n- Objectif 2\n"} />
+                  <Form.Item name="objectives" label="Objectifs (Markdown)">
+                    <Input.TextArea rows={8} placeholder={"- Objectif 1\n- Objectif 2\n"} />
                   </Form.Item>
 
                   <Form.Item name="stakeholders" label="Parties intéressées">
-                    <Select mode="tags" placeholder="Commercial, ADV..." />
+                    <Select
+                      mode="multiple"
+                      options={stakeholderOptions}
+                      placeholder="Sélectionner les parties intéressées..."
+                      filterOption={(input, option) =>
+                        (option?.label ?? "").toLowerCase().includes(input.toLowerCase())
+                      }
+                    />
                   </Form.Item>
 
+                  {/* Reference documents */}
                   <Form.List name="referenceDocuments">
                     {(fields, { add, remove }) => (
                       <div>
-                        <Space style={{ marginBottom: 8 }}>
+                        <Space style={{ marginBottom: 12 }}>
                           <Button onClick={() => add({ code: "", title: "", type: "PDF", url: "" })}>
-                            + Ajouter un doc
-                          </Button>
-                          <Button type="primary" onClick={saveBase}>
-                            Enregistrer
+                            + Ajouter un document
                           </Button>
                         </Space>
 
@@ -411,6 +407,12 @@ export default function AdminProcessesPage() {
                       </div>
                     )}
                   </Form.List>
+
+                  <Space style={{ marginTop: 24 }}>
+                    <Button type="primary" onClick={saveBase}>
+                      Enregistrer
+                    </Button>
+                  </Space>
                 </Form>
               ),
             },
@@ -424,7 +426,7 @@ export default function AdminProcessesPage() {
                   onSaved={async (rows) => {
                     try {
                       const full = await adminGetProcess(editing.id);
-                      setEditing(full.data as Proc);
+                      setEditing(full.data as ProcessFull);
                     } catch {
                       setEditing((prev: any) => ({ ...(prev || {}), sipoc: { rows } }));
                     }
@@ -445,7 +447,7 @@ export default function AdminProcessesPage() {
                   onSaved={async (logi) => {
                     try {
                       const full = await adminGetProcess(editing.id);
-                      setEditing(full.data as Proc);
+                      setEditing(full.data as ProcessFull);
                     } catch {
                       setEditing((prev: any) => ({ ...(prev || {}), logigramme: logi }));
                     }

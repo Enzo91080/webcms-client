@@ -1,7 +1,8 @@
 import { ArrowDownOutlined, ArrowUpOutlined, CheckCircleOutlined, CloseCircleOutlined, DeleteOutlined, PlusOutlined, SaveOutlined } from "@ant-design/icons";
 import { Button, Card, Input, message, Popconfirm, Space, Tag, Tooltip, Typography } from "antd";
 import { useEffect, useMemo, useState } from "react";
-import { saveSipoc, SipocRow } from "../lib/api";
+import { saveSipoc } from "../../api";
+import type { SipocRow } from "../../types";
 
 const { Title, Text } = Typography;
 
