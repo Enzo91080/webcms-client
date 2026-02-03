@@ -7,6 +7,7 @@ const { Sider, Content, Header } = Layout;
 const NAV = [
   { key: "processes", label: "Processus", to: "/admin/processes" },
   { key: "stakeholders", label: "Parties intéressées", to: "/admin/partie-interressees" },
+  { key: "pilots", label: "Pilotes", to: "/admin/pilotes" },
   { key: "sipoc", label: "SIPOC", to: "/admin/sipoc" },
   { key: "raci", label: "RACI", to: "/admin/raci" },
 ] as const;

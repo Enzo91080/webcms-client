@@ -18,16 +18,20 @@ import { useEffect, useMemo, useState } from "react";
 import { LogigrammeEditor } from "../../logigramme";
 import ProcessPreview from "../../ProcessPreview";
 import SipocEditor from "../../sipoc/SipocEditor";
+import ObjectivesBlocksEditor from "./ObjectivesBlocksEditor";
 import {
   adminCreateProcess,
   adminDeleteProcess,
   adminGetProcess,
   adminListProcesses,
   adminListStakeholders,
+  adminListPilots,
   adminPatchProcess,
+  adminSetProcessPilots,
   type Stakeholder,
+  type Pilot,
 } from "../../../api";
-import { ProcessFull } from "../../../types";
+import { ProcessFull, ObjectiveBlock } from "../../../types";
 
 
 
@@ -44,6 +48,124 @@ function normalizeDocs(input: any) {
     type: String(d?.type || ""),
     url: String(d?.url || ""),
   }));
+}
+
+/**
+ * Parse un string objectives (ancien format) en ObjectiveBlock[]
+ * Détecte automatiquement :
+ * - Lignes numérotées (1., 2., etc.) → bloc numbered ou text si suivi de sous-éléments
+ * - Lignes indentées ou sans numéro après une numérotée → bullets (sous-liste)
+ * - Lignes simples → text
+ */
+function parseObjectivesToBlocks(input: string): ObjectiveBlock[] {
+  if (!input || typeof input !== "string") return [];
+
+  const lines = input.split(/\r?\n/);
+  const blocks: ObjectiveBlock[] = [];
+
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i];
+    const trimmed = line.trim();
+
+    if (!trimmed) {
+      i++;
+      continue;
+    }
+
+    // Détecte une ligne numérotée : "1.", "1. ", "1.  Texte", etc.
+    const numberedMatch = trimmed.match(/^(\d+)\.\s*(.*)/);
+
+    if (numberedMatch) {
+      const mainText = numberedMatch[2].trim();
+
+      // Regarde les lignes suivantes pour détecter des sous-éléments
+      const subItems: string[] = [];
+      let j = i + 1;
+
+      while (j < lines.length) {
+        const nextLine = lines[j];
+        const nextTrimmed = nextLine.trim();
+
+        // Ligne vide = fin du groupe
+        if (!nextTrimmed) break;
+
+        // Si c'est une nouvelle ligne numérotée, on arrête
+        if (/^\d+\.\s*/.test(nextTrimmed)) break;
+
+        // Sinon c'est un sous-élément (indenté ou bullet)
+        // Nettoie les éventuels tirets/puces en début
+        const cleaned = nextTrimmed.replace(/^[-•]\s*/, "").trim();
+        if (cleaned) {
+          subItems.push(cleaned);
+        }
+        j++;
+      }
+
+      if (subItems.length > 0) {
+        // On a des sous-éléments : créer un bloc text pour le titre + bloc bullets
+        if (mainText) {
+          blocks.push({ type: "text", text: mainText });
+        }
+        blocks.push({ type: "bullets", items: subItems });
+      } else {
+        // Pas de sous-éléments : on accumule les lignes numérotées en un seul bloc numbered
+        const numberedItems: string[] = [];
+        if (mainText) numberedItems.push(mainText);
+
+        // Continue à collecter les lignes numérotées consécutives sans sous-éléments
+        let k = j;
+        while (k < lines.length) {
+          const nextLine = lines[k];
+          const nextTrimmed = nextLine.trim();
+
+          if (!nextTrimmed) {
+            k++;
+            continue;
+          }
+
+          const nextNumbered = nextTrimmed.match(/^(\d+)\.\s*(.*)/);
+          if (!nextNumbered) break;
+
+          // Vérifie si cette ligne numérotée a des sous-éléments
+          let hasSubItems = false;
+          let m = k + 1;
+          while (m < lines.length) {
+            const checkLine = lines[m].trim();
+            if (!checkLine) break;
+            if (/^\d+\.\s*/.test(checkLine)) break;
+            hasSubItems = true;
+            break;
+          }
+
+          if (hasSubItems) break;
+
+          const itemText = nextNumbered[2].trim();
+          if (itemText) numberedItems.push(itemText);
+          k++;
+        }
+
+        if (numberedItems.length > 0) {
+          blocks.push({ type: "numbered", items: numberedItems });
+        }
+        i = k;
+        continue;
+      }
+
+      i = j;
+      continue;
+    }
+
+    // Ligne simple (ni numérotée, ni sous-élément) → bloc text
+    // Ou ligne avec tiret/puce isolée
+    const cleanedLine = trimmed.replace(/^[-•]\s*/, "").trim();
+    if (cleanedLine) {
+      blocks.push({ type: "text", text: cleanedLine });
+    }
+    i++;
+  }
+
+  return blocks;
 }
 
 function buildTree(items: ProcessFull[]) {
@@ -87,6 +209,7 @@ export default function AdminProcessesPage() {
   const [items, setItems] = useState<ProcessFull[]>([]);
   const [loading, setLoading] = useState(false);
   const [stakeholders, setStakeholders] = useState<Stakeholder[]>([]);
+  const [pilots, setPilots] = useState<Pilot[]>([]);
 
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<ProcessFull | null>(null);
@@ -115,9 +238,19 @@ export default function AdminProcessesPage() {
     }
   }
 
+  async function loadPilots() {
+    try {
+      const res = await adminListPilots();
+      setPilots((res.data || []).filter((p) => p.isActive));
+    } catch (e) {
+      console.warn("Failed to load pilots", e);
+    }
+  }
+
   useEffect(() => {
     reload();
     loadStakeholders();
+    loadPilots();
   }, []);
 
   const treeData = useMemo(() => buildTree(items), [items]);
@@ -134,6 +267,10 @@ export default function AdminProcessesPage() {
     return stakeholders.map((s) => ({ value: s.name, label: s.name }));
   }, [stakeholders]);
 
+  const pilotOptions = useMemo(() => {
+    return pilots.map((p) => ({ value: p.id, label: p.name }));
+  }, [pilots]);
+
   function openCreate() {
     setEditing(null);
     setActiveTab("general");
@@ -147,8 +284,9 @@ export default function AdminProcessesPage() {
       orderInParent: 1,
       isActive: true,
       title: "",
-      objectives: "",
+      objectivesBlocks: [],
       stakeholders: [],
+      pilotIds: [],
       referenceDocuments: [],
     });
   }
@@ -157,6 +295,25 @@ export default function AdminProcessesPage() {
     setEditing(p); // optimistic: show drawer immediately
     setActiveTab("general");
     setOpen(true);
+
+    // Détermine les objectivesBlocks : utilise les existants ou parse l'ancien string
+    const getObjectivesBlocks = (proc: ProcessFull): ObjectiveBlock[] => {
+      if (Array.isArray(proc.objectivesBlocks) && proc.objectivesBlocks.length > 0) {
+        return proc.objectivesBlocks;
+      }
+      // Fallback : parse l'ancien format string
+      if (proc.objectives && typeof proc.objectives === "string") {
+        return parseObjectivesToBlocks(proc.objectives);
+      }
+      return [];
+    };
+
+    // Helper to extract pilotIds from process
+    const getPilotIds = (proc: ProcessFull): string[] => {
+      if (Array.isArray(proc.pilotIds)) return proc.pilotIds;
+      if (Array.isArray(proc.pilots)) return proc.pilots.map((p) => p.id);
+      return [];
+    };
 
     // populate from lite first
     form.resetFields();
@@ -167,8 +324,9 @@ export default function AdminProcessesPage() {
       orderInParent: p.orderInParent ?? 1,
       isActive: Boolean(p.isActive ?? true),
       title: p.title || "",
-      objectives: p.objectives || "",
+      objectivesBlocks: getObjectivesBlocks(p),
       stakeholders: Array.isArray(p.stakeholders) ? p.stakeholders : [],
+      pilotIds: getPilotIds(p),
       referenceDocuments: normalizeDocs(p.referenceDocuments),
     });
 
@@ -184,8 +342,9 @@ export default function AdminProcessesPage() {
         orderInParent: proc.orderInParent ?? 1,
         isActive: Boolean(proc.isActive ?? true),
         title: proc.title || "",
-        objectives: proc.objectives || "",
+        objectivesBlocks: getObjectivesBlocks(proc),
         stakeholders: Array.isArray(proc.stakeholders) ? proc.stakeholders : [],
+        pilotIds: getPilotIds(proc),
         referenceDocuments: normalizeDocs(proc.referenceDocuments),
       });
     } catch (e) {
@@ -203,15 +362,20 @@ export default function AdminProcessesPage() {
         orderInParent: Number(v.orderInParent || 1),
         isActive: Boolean(v.isActive),
         title: String(v.title || ""),
-        objectives: String(v.objectives || ""),
+        objectivesBlocks: Array.isArray(v.objectivesBlocks) ? v.objectivesBlocks : [],
         stakeholders: Array.isArray(v.stakeholders) ? v.stakeholders : [],
         referenceDocuments: Array.isArray(v.referenceDocuments) ? v.referenceDocuments : [],
       };
+      const pilotIds: string[] = Array.isArray(v.pilotIds) ? v.pilotIds : [];
 
       if (!payload.code || !payload.name) throw new Error("code et name sont obligatoires");
 
       if (!editing?.id) {
-        await adminCreateProcess(payload);
+        const createRes = await adminCreateProcess(payload);
+        const createdId = createRes.data?.id;
+        if (createdId && pilotIds.length > 0) {
+          await adminSetProcessPilots(createdId, pilotIds);
+        }
         message.success("Processus créé");
         setOpen(false);
         await reload();
@@ -219,6 +383,7 @@ export default function AdminProcessesPage() {
       }
 
       await adminPatchProcess(editing.id, payload);
+      await adminSetProcessPilots(editing.id, pilotIds);
       message.success("Processus enregistré");
       await reload();
 
@@ -352,8 +517,19 @@ export default function AdminProcessesPage() {
                     <Input.TextArea rows={3} />
                   </Form.Item>
 
-                  <Form.Item name="objectives" label="Objectifs (Markdown)">
-                    <Input.TextArea rows={8} placeholder={"- Objectif 1\n- Objectif 2\n"} />
+                  <Form.Item name="objectivesBlocks" label="Objectifs">
+                    <ObjectivesBlocksEditor />
+                  </Form.Item>
+
+                  <Form.Item name="pilotIds" label="Pilote(s)">
+                    <Select
+                      mode="multiple"
+                      options={pilotOptions}
+                      placeholder="Sélectionner le(s) pilote(s)..."
+                      filterOption={(input, option) =>
+                        (option?.label ?? "").toLowerCase().includes(input.toLowerCase())
+                      }
+                    />
                   </Form.Item>
 
                   <Form.Item name="stakeholders" label="Parties intéressées">

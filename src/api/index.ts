@@ -18,6 +18,7 @@ export {
   adminCreateProcess,
   adminPatchProcess,
   adminDeleteProcess,
+  adminSetProcessPilots,
 } from "./process.api";
 
 // Stakeholders API
@@ -29,6 +30,16 @@ export {
   adminSetStakeholderProcesses,
   type Stakeholder,
 } from "./stakeholders.api";
+
+// Pilots API
+export {
+  adminListPilots,
+  adminCreatePilot,
+  adminPatchPilot,
+  adminDeletePilot,
+  adminSetPilotProcesses,
+  type Pilot,
+} from "./pilots.api";
 
 // SIPOC Admin API
 export {

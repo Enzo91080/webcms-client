@@ -68,3 +68,13 @@ export async function adminDeleteProcess(id: string) {
     method: "DELETE",
   });
 }
+
+export async function adminSetProcessPilots(processId: string, pilotIds: string[]) {
+  return request<{ data: { ok: true; pilotIds: string[] } }>(
+    `/api/admin/processes/${processId}/pilots`,
+    {
+      method: "PUT",
+      body: JSON.stringify({ pilotIds }),
+    }
+  );
+}

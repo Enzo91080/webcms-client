@@ -1,5 +1,5 @@
 // Process types
-export type { ProcessLite, ProcessFull, PathItem } from "./process";
+export type { ProcessLite, ProcessFull, PathItem, ObjectiveBlock, PilotRef } from "./process";
 
 // SIPOC types
 export type { Designation, SipocRow, SipocPhase } from "./sipoc";

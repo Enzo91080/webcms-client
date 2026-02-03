@@ -19,6 +19,7 @@ import {
   Divider,
   List,
   Modal,
+  Popover,
   Row,
   Space,
   Spin,
@@ -30,7 +31,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import LogigrammeViewer from "../../components/logigramme/LogigrammeViewer";
 import { SipocVisioTable } from "../../components/sipoc/SipocVisioTable";
 import { getCartography, getPath, getProcessByCode } from "../../api";
-import type { ProcessFull, ProcessLite, PathItem } from "../../types";
+import type { ProcessFull, ProcessLite, PathItem, ObjectiveBlock } from "../../types";
 
 type ReferenceDoc = {
   code: string;
@@ -87,6 +88,48 @@ function normalizeObjectives(input: unknown): string[] {
   }
 
   return [];
+}
+
+// Rendu des objectivesBlocks structurés
+function ObjectivesBlocksRenderer({ blocks }: { blocks: ObjectiveBlock[] }) {
+  return (
+    <>
+      {blocks.map((block, idx) => {
+        if (block.type === "text") {
+          return (
+            <Typography.Text
+              key={idx}
+              style={{ color: "rgba(255,255,255,0.9)", fontSize: 13, lineHeight: 1.6, display: "block", marginBottom: 8 }}
+            >
+              {block.text}
+            </Typography.Text>
+          );
+        }
+
+        const items = block.items.filter((it) => it.trim());
+        if (!items.length) return null;
+
+        return (
+          <List
+            key={idx}
+            size="small"
+            dataSource={items}
+            style={{ marginBottom: 8 }}
+            renderItem={(item, itemIdx) => (
+              <List.Item style={{ border: "none", padding: "4px 0" }}>
+                <Typography.Text style={{ color: "rgba(255,255,255,0.9)", fontSize: 13, lineHeight: 1.6 }}>
+                  <span style={{ fontWeight: 800, marginRight: 8, color: "rgba(255, 255, 255, 0.85)", minWidth: 20, display: "inline-block" }}>
+                    {block.type === "numbered" ? `${itemIdx + 1}.` : "•"}
+                  </span>
+                  {item}
+                </Typography.Text>
+              </List.Item>
+            )}
+          />
+        );
+      })}
+    </>
+  );
 }
 
 export default function ProcessPage() {
@@ -219,13 +262,15 @@ export default function ProcessPage() {
   const statusLabel = "Validé";
   const versionLabel = "3.0";
   const applicationDate = "22/12/2025";
-  const pilotName = "Jean Dupont";
 
   const stakeholders = normalizeStakeholders(process?.stakeholders);
   const docs = normalizeDocs(process?.referenceDocuments);
 
   // ✅ objectifs
-  const objectives = normalizeObjectives((process as any)?.objectives);
+  const objectivesBlocks = Array.isArray(process?.objectivesBlocks) && process.objectivesBlocks.length > 0
+    ? process.objectivesBlocks
+    : null;
+  const objectives = objectivesBlocks ? [] : normalizeObjectives((process as any)?.objectives);
 
   if (error) {
     return (
@@ -362,17 +407,40 @@ export default function ProcessPage() {
                         size="small"
                         style={{ background: "rgba(255,255,255,0.15)", border: "1.5px solid rgba(255,255,255,0.25)" }}
                       />
-                      <Space direction="vertical" size={0}>
-                        <span style={{ color: "white", fontWeight: 600, fontSize: 14 }}>{pilotName}</span>
-                        <Button
-                          type="link"
-                          size="small"
-                          style={{ color: "rgba(255,255,255,0.9)", padding: 0, height: "auto", fontSize: 12 }}
-                          onClick={() => alert("Détails pilote (placeholder)")}
-                        >
-                          Voir détails
-                        </Button>
-                      </Space>
+                      {process.pilots && process.pilots.length > 0 ? (
+                        <Space size={6}>
+                          <span style={{ color: "white", fontWeight: 600, fontSize: 14 }}>
+                            {process.pilots[0].name}
+                          </span>
+                          {process.pilots.length > 1 && (
+                            <Popover
+                              content={
+                                <Space size={[6, 6]} wrap>
+                                  {process.pilots.slice(1).map((p) => (
+                                    <Tag key={p.id}>{p.name}</Tag>
+                                  ))}
+                                </Space>
+                              }
+                              trigger="hover"
+                            >
+                              <Tag
+                                style={{
+                                  background: "rgba(255,255,255,0.2)",
+                                  border: "none",
+                                  color: "white",
+                                  cursor: "pointer",
+                                  fontSize: 12,
+                                  fontWeight: 600,
+                                }}
+                              >
+                                +{process.pilots.length - 1}
+                              </Tag>
+                            </Popover>
+                          )}
+                        </Space>
+                      ) : (
+                        <span style={{ color: "rgba(255,255,255,0.6)", fontSize: 14 }}>—</span>
+                      )}
                     </Space>
                   </Space>
                 </Space>
@@ -390,20 +458,24 @@ export default function ProcessPage() {
                       Objectifs du processus
                     </Typography.Text>
                   </Space>
-                  <List
-                    size="small"
-                    dataSource={objectives}
-                    renderItem={(item, idx) => (
-                      <List.Item style={{ border: "none", padding: "6px 0" }}>
-                        <Typography.Text style={{ color: "rgba(255,255,255,0.9)", fontSize: 13, lineHeight: 1.6 }}>
-                          <span style={{ fontWeight: 800, marginRight: 8, color: "rgba(255, 255, 255, 0.85)" }}>
-                            {idx + 1}.
-                          </span>
-                          {item}
-                        </Typography.Text>
-                      </List.Item>
-                    )}
-                  />
+                  {objectivesBlocks ? (
+                    <ObjectivesBlocksRenderer blocks={objectivesBlocks} />
+                  ) : (
+                    <List
+                      size="small"
+                      dataSource={objectives}
+                      renderItem={(item, idx) => (
+                        <List.Item style={{ border: "none", padding: "6px 0" }}>
+                          <Typography.Text style={{ color: "rgba(255,255,255,0.9)", fontSize: 13, lineHeight: 1.6 }}>
+                            <span style={{ fontWeight: 800, marginRight: 8, color: "rgba(255, 255, 255, 0.85)" }}>
+                              {idx + 1}.
+                            </span>
+                            {item}
+                          </Typography.Text>
+                        </List.Item>
+                      )}
+                    />
+                  )}
                 </Space>
               </Col>
 
