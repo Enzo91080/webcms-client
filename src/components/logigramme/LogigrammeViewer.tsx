@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import ReactFlow, { Background, Controls, Edge, MarkerType, Node } from "reactflow";
 import type { LogiNode, LogiEdge, SipocRow } from "../../types";
-import OrthogonalEdge from "./OrthogonalEdge";
+import OrthogonalEdge from "./edges/OrthogonalEdge";
 import ViewShapeNode from "./ViewShapeNode";
 
 type StoredNode = LogiNode;

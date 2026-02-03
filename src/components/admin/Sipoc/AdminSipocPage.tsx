@@ -1,5 +1,5 @@
 import { ReloadOutlined, SaveOutlined, UndoOutlined } from "@ant-design/icons";
-import { Button, message, Select, Space, Typography } from "antd";
+import { Button, Col, message, Row, Select, Space, Typography } from "antd";
 import { useEffect, useState } from "react";
 import {
   adminGetSipoc,
@@ -8,6 +8,7 @@ import {
 } from "../../../api";
 import { SipocTable } from "../../sipoc";
 import type { SipocPhase } from "../../../types";
+import Alert from "antd/es/alert/Alert";
 
 type ProcessOption = {
   id: string;
@@ -41,6 +42,7 @@ export default function AdminSipocPage() {
     loadProcesses();
   }, []);
 
+  // trier les process et sous process par code croissant P01 -> SP01 -> P02 -> SP02
   async function loadProcesses() {
     try {
       setLoadingProcesses(true);
@@ -50,6 +52,7 @@ export default function AdminSipocPage() {
         code: p.code,
         name: p.name,
       }));
+      items.sort((a, b) => a.code.localeCompare(b.code));
       setProcesses(items);
     } catch (e) {
       message.error(getErrorMessage(e));
@@ -87,18 +90,18 @@ export default function AdminSipocPage() {
   async function handleRefresh() {
     if (selectedProcessId) {
       await loadSipoc(selectedProcessId);
-      message.success("Donnees rechargees");
+      message.success("Donnees rechargées");
     }
   }
 
   function handleCancel() {
     setPhases(originalPhases);
-    message.info("Modifications annulees");
+    message.info("Modifications annulées");
   }
 
   async function handleSave() {
     if (!selectedProcessId) {
-      message.error("Selectionnez un process");
+      message.error("Sélectionnez un processus");
       return;
     }
 
@@ -106,7 +109,7 @@ export default function AdminSipocPage() {
       setSaving(true);
       await adminUpsertSipoc(selectedProcessId, { phases });
       setOriginalPhases(phases);
-      message.success("SIPOC enregistre avec succes");
+      message.success("SIPOC enregistré avec succès");
     } catch (e) {
       message.error(getErrorMessage(e));
     } finally {
@@ -137,61 +140,70 @@ export default function AdminSipocPage() {
       </div>
 
       {/* Process selector + Actions */}
-      <Space
-        direction="vertical"
-        size={16}
-        style={{ width: "100%", marginBottom: 24 }}
-      >
-        <Space wrap>
-          <span>Process :</span>
-          <Select
-            style={{ width: 400 }}
-            placeholder="Selectionnez un process"
-            loading={loadingProcesses}
-            showSearch
-            optionFilterProp="label"
-            value={selectedProcessId}
-            onChange={handleProcessChange}
-            options={processes.map((p) => ({
-              value: p.id,
-              label: `${p.code} - ${p.name}`,
-            }))}
-            allowClear
-          />
-        </Space>
+      <Row gutter={[16, 16]} align="middle" justify="space-between" style={{ marginBottom: 24 }}>
+        {/* Left: Process selector */}
+        <Col flex="auto">
+          <Space wrap>
+            <span>Process :</span>
+            <Select
+              style={{ width: 400, maxWidth: "100%" }}
+              placeholder="Sélectionnez un processus"
+              loading={loadingProcesses}
+              showSearch
+              optionFilterProp="label"
+              value={selectedProcessId}
+              onChange={handleProcessChange}
+              options={processes.map((p) => ({
+                value: p.id,
+                label: `${p.code} - ${p.name}`,
+              }))}
+              allowClear
+            />
+          </Space>
+        </Col>
 
-        <Space wrap>
-          <Button
-            icon={<ReloadOutlined />}
-            onClick={handleRefresh}
-            loading={loading}
-            disabled={!selectedProcessId}
-          >
-            Rafraichir
-          </Button>
-          <Button
-            icon={<UndoOutlined />}
-            onClick={handleCancel}
-            disabled={!selectedProcessId || !hasChanges}
-          >
-            Annuler
-          </Button>
-          <Button
-            type="primary"
-            icon={<SaveOutlined />}
-            onClick={handleSave}
-            loading={saving}
-            disabled={!selectedProcessId || !hasChanges}
-          >
-            Enregistrer
-          </Button>
-          {hasChanges && (
-            <Typography.Text type="warning" style={{ marginLeft: 8 }}>
-              Modifications non enregistrees
-            </Typography.Text>
-          )}
-        </Space>
-      </Space>
+        {/* Right: Actions */}
+        <Col flex="none">
+          <Space wrap>
+            {hasChanges && (
+              <Alert
+                message="Modifications non enregistrées"
+                type="warning"
+                showIcon
+                closable
+              />
+            )}
+            <Button
+              icon={<ReloadOutlined />}
+              onClick={handleRefresh}
+              loading={loading}
+              disabled={!selectedProcessId}
+            >
+              Rafraichir
+            </Button>
+
+            <Button
+              icon={<UndoOutlined />}
+              onClick={handleCancel}
+              disabled={!selectedProcessId || !hasChanges}
+            >
+              Annuler
+            </Button>
+
+            <Button
+              type="primary"
+              icon={<SaveOutlined />}
+              onClick={handleSave}
+              loading={saving}
+              disabled={!selectedProcessId || !hasChanges}
+            >
+              Enregistrer
+            </Button>
+
+
+          </Space>
+        </Col>
+      </Row>
 
       {/* SIPOC Table */}
       {selectedProcessId ? (

@@ -1,23 +1,36 @@
+import { memo } from "react";
 import { BaseEdge, EdgeLabelRenderer, getSmoothStepPath } from "reactflow";
 import type { EdgeProps } from "reactflow";
+import type { OrthogonalEdgeData } from "../editor/model/types";
 
-function toNum(x: unknown, fallback: number) {
+function toNum(x: unknown, fallback: number): number {
   const n = typeof x === "number" ? x : Number(x);
   return Number.isFinite(n) ? n : fallback;
 }
 
-export default function OrthogonalEdge(props: EdgeProps) {
-  const { id, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, markerEnd, style } = props;
+function OrthogonalEdge(props: EdgeProps<OrthogonalEdgeData>) {
+  const {
+    id,
+    sourceX,
+    sourceY,
+    targetX,
+    targetY,
+    sourcePosition,
+    targetPosition,
+    markerEnd,
+    style,
+    data,
+    label,
+  } = props;
 
-  const data: any = (props as any).data || {};
-  const stroke = String(data.color || (style as any)?.stroke || "#f59ad5");
-  const strokeWidth = toNum(data.width || (style as any)?.strokeWidth, 2);
+  const stroke = String(data?.color || (style as any)?.stroke || "#f59ad5");
+  const strokeWidth = toNum(data?.width || (style as any)?.strokeWidth, 2);
 
-  const badgeText = (data.badgeText ?? "").toString().trim();
-  const badgeBorder = String(data.badgeColor || stroke);
-  const badgeBg = String(data.badgeBg || "#ffffff");
+  const badgeText = (data?.badgeText ?? "").toString().trim();
+  const badgeBorder = String(data?.badgeColor || stroke);
+  const badgeBg = String(data?.badgeBg || "#ffffff");
 
-  const edgeLabel = (props as any).label ? String((props as any).label) : "";
+  const edgeLabel = label ? String(label) : "";
 
   const [edgePath, labelX, labelY] = getSmoothStepPath({
     sourceX,
@@ -45,7 +58,7 @@ export default function OrthogonalEdge(props: EdgeProps) {
 
       <EdgeLabelRenderer>
         {/* Optional edge label */}
-        {edgeLabel ? (
+        {edgeLabel && (
           <div
             style={{
               position: "absolute",
@@ -63,10 +76,10 @@ export default function OrthogonalEdge(props: EdgeProps) {
           >
             {edgeLabel}
           </div>
-        ) : null}
+        )}
 
         {/* Optional badge bubble (pastille) */}
-        {badgeText ? (
+        {badgeText && (
           <div
             style={{
               position: "absolute",
@@ -87,8 +100,10 @@ export default function OrthogonalEdge(props: EdgeProps) {
           >
             {badgeText}
           </div>
-        ) : null}
+        )}
       </EdgeLabelRenderer>
     </>
   );
 }
+
+export default memo(OrthogonalEdge);

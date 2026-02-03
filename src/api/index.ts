@@ -26,6 +26,7 @@ export {
   adminCreateStakeholder,
   adminPatchStakeholder,
   adminDeleteStakeholder,
+  adminSetStakeholderProcesses,
   type Stakeholder,
 } from "./stakeholders.api";
 

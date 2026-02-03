@@ -15,7 +15,7 @@ import {
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { useEffect, useMemo, useState } from "react";
-import LogigrammeEditor from "../../logigramme/LogigrammeEditor";
+import { LogigrammeEditor } from "../../logigramme";
 import ProcessPreview from "../../ProcessPreview";
 import SipocEditor from "../../sipoc/SipocEditor";
 import {
@@ -312,7 +312,7 @@ export default function AdminProcessesPage() {
         open={open}
         onClose={() => setOpen(false)}
         title={editing ? `Admin — ${editing.code} ${editing.name}` : "Admin — Nouveau processus"}
-        width={1200}
+        width={1400}
         destroyOnClose
       >
         <Tabs
@@ -422,18 +422,18 @@ export default function AdminProcessesPage() {
               children: editing?.id ? (
                 <SipocEditor
                   processId={editing.id}
-                  initialRows={editing?.sipoc?.rows || []}
-                  onSaved={async (rows) => {
+                  processName={`${editing.code} - ${editing.name}`}
+                  onSaved={async () => {
                     try {
                       const full = await adminGetProcess(editing.id);
                       setEditing(full.data as ProcessFull);
                     } catch {
-                      setEditing((prev: any) => ({ ...(prev || {}), sipoc: { rows } }));
+                      // Ignore - data already saved via SipocEditor
                     }
                   }}
                 />
               ) : (
-                <div style={{ opacity: 0.7 }}>Crée d’abord le processus puis édite le SIPOC.</div>
+                <div style={{ opacity: 0.7 }}>Crée d'abord le processus puis édite le SIPOC.</div>
               ),
             },
             {
