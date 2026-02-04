@@ -4,8 +4,8 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import "reactflow/dist/style.css";
 import App from "./App";
-import { getToken, setTokenGetter } from "./api";
-import { AuthProvider } from "./components/admin/AuthProvider";
+import { getToken, setTokenGetter } from "./shared/api";
+import { AuthProvider } from "./app/providers/AuthProvider";
 import "./styles/fonts.css";
 import "./styles/global.css";
 

@@ -1,14 +1,14 @@
 import { ConfigProvider } from "antd";
 import { Route, Routes } from "react-router-dom";
-import AdminProcessesPage from "./components/admin/Process/AdminListProcessPage";
-import RequireAdmin from "./components/admin/RequireAdmin";
-import AdminLayout from "./pages/admin/AdminLayout";
-import AdminLoginPage from "./pages/admin/AdminLoginPage";
-import CartographyPage from "./pages/Cartography/CartographyPage";
-import ProcessPage from "./pages/Process/ProcessPage";
-import AdminStakeholdersPage from "./components/admin/Stakeholder/AdminListStakeholderPage";
-import AdminPilotsPage from "./components/admin/Pilot/AdminListPilotPage";
-import AdminSipocPage from "./components/admin/Sipoc/AdminSipocPage";
+import AdminProcessesPage from "./features/processes/pages/AdminListProcessPage";
+import RequireAdmin from "./app/providers/RequireAdmin";
+import AdminLayout from "./app/layout/AdminLayout";
+import AdminLoginPage from "./app/layout/AdminLoginPage";
+import CartographyPage from "./features/processes/pages/CartographyPage";
+import ProcessPage from "./features/processes/pages/ProcessPage";
+import AdminStakeholdersPage from "./features/stakeholders/pages/AdminListStakeholderPage";
+import AdminPilotsPage from "./features/pilots/pages/AdminListPilotPage";
+import AdminSipocPage from "./features/sipoc/pages/AdminSipocPage";
 
 // Ant Design default font (text): Open Sans
 const antdFontFamily =
