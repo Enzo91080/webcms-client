@@ -19,6 +19,8 @@ export {
   adminPatchProcess,
   adminDeleteProcess,
   adminSetProcessPilots,
+  adminSetProcessStakeholders,
+  type ProcessStakeholderItem,
 } from "./process.api";
 
 // Stakeholders API
@@ -29,6 +31,8 @@ export {
   adminDeleteStakeholder,
   adminSetStakeholderProcesses,
   type Stakeholder,
+  type ProcessWithLink,
+  type StakeholderProcessItem,
 } from "./stakeholders.api";
 
 // Pilots API

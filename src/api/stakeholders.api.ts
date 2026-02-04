@@ -1,4 +1,5 @@
 import { request } from "./client";
+import type { StakeholderLinkFields } from "../types";
 
 export type ProcessRef = {
   id: string;
@@ -6,51 +7,38 @@ export type ProcessRef = {
   name: string;
 };
 
+export type ProcessWithLink = ProcessRef & {
+  link?: StakeholderLinkFields;
+};
+
 export type Stakeholder = {
   id: string;
   name: string;
   isActive: boolean;
 
-  // Relation (many-to-many)
-  processIds?: string[];       // pour le form (Select multiple)
-  processes?: ProcessRef[];    // pour l'affichage (Tags "P02 — Vendre")
-
-  // New fields (English) — free text
-  needs?: string | null;
-  expectations?: string | null;
-  evaluationCriteria?: string | null;
-  requirements?: string | null;
-  strengths?: string | null;
-  weaknesses?: string | null;
-  opportunities?: string | null;
-  risks?: string | null;
-  actionPlan?: string | null;
+  // Relation (many-to-many) avec champs de lien
+  processIds?: string[];           // pour le form (Select multiple)
+  processes?: ProcessWithLink[];   // pour l'affichage avec champs de lien
 
   createdAt?: string;
   updatedAt?: string;
 };
 
-// Payloads (clean & token-friendly)
+// Payloads
 export type CreateStakeholderPayload = {
   name: string;
   isActive?: boolean;
-
-  needs?: string | null;
-  expectations?: string | null;
-  evaluationCriteria?: string | null;
-  requirements?: string | null;
-  strengths?: string | null;
-  weaknesses?: string | null;
-  opportunities?: string | null;
-  risks?: string | null;
-  actionPlan?: string | null;
 };
 
 export type PatchStakeholderPayload = Partial<CreateStakeholderPayload>;
 
+// Payload pour les process d'un stakeholder avec leurs champs de lien
+export type StakeholderProcessItem = {
+  processId: string;
+} & StakeholderLinkFields;
+
 // Admin endpoints
 export async function adminListStakeholders() {
-  // back should return data: Stakeholder[] with processIds and/or processes
   return request<{ data: Stakeholder[] }>("/api/admin/stakeholders");
 }
 
@@ -74,15 +62,20 @@ export async function adminDeleteStakeholder(id: string) {
   });
 }
 
-export async function adminSetStakeholderProcesses(id: string, processIds: string[]) {
-  return request<{
-    data: {
-      ok: true;
-      processIds: string[];
-      processes?: ProcessRef[];
-    };
-  }>(`/api/admin/stakeholders/${id}/processes`, {
-    method: "PUT",
-    body: JSON.stringify({ processIds }),
-  });
+/**
+ * Sets the processes for a stakeholder with enriched link fields.
+ * @param id - Stakeholder ID
+ * @param items - Array of { processId, needs, expectations, ... }
+ */
+export async function adminSetStakeholderProcesses(
+  id: string,
+  items: StakeholderProcessItem[]
+) {
+  return request<{ data: { ok: true; count: number } }>(
+    `/api/admin/stakeholders/${id}/processes`,
+    {
+      method: "PUT",
+      body: JSON.stringify({ items }),
+    }
+  );
 }

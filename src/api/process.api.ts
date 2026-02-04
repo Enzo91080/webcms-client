@@ -1,5 +1,10 @@
-import type { PathItem, ProcessFull, ProcessLite, SipocRow, LogiNode, LogiEdge, LegendItem } from "../types";
+import type { PathItem, ProcessFull, ProcessLite, SipocRow, LogiNode, LogiEdge, LegendItem, StakeholderLinkFields } from "../types";
 import { request } from "./client";
+
+// Payload pour les stakeholders d'un process avec leurs champs de lien
+export type ProcessStakeholderItem = {
+  stakeholderId: string;
+} & StakeholderLinkFields;
 
 export async function getCartography() {
   return request<{ data: ProcessLite[] }>("/api/processes/cartography");
@@ -75,6 +80,19 @@ export async function adminSetProcessPilots(processId: string, pilotIds: string[
     {
       method: "PUT",
       body: JSON.stringify({ pilotIds }),
+    }
+  );
+}
+
+export async function adminSetProcessStakeholders(
+  processId: string,
+  items: ProcessStakeholderItem[]
+) {
+  return request<{ data: { ok: true; count: number } }>(
+    `/api/admin/processes/${processId}/stakeholders`,
+    {
+      method: "PUT",
+      body: JSON.stringify({ items }),
     }
   );
 }

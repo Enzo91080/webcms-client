@@ -1,5 +1,6 @@
 import {
   Button,
+  Collapse,
   Drawer,
   Form,
   Input,
@@ -11,6 +12,7 @@ import {
   Table,
   Tabs,
   Tag,
+  Typography,
   message,
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
@@ -28,10 +30,12 @@ import {
   adminListPilots,
   adminPatchProcess,
   adminSetProcessPilots,
+  adminSetProcessStakeholders,
   type Stakeholder,
   type Pilot,
+  type ProcessStakeholderItem,
 } from "../../../api";
-import { ProcessFull, ObjectiveBlock } from "../../../types";
+import { ProcessFull, ObjectiveBlock, StakeholderLinkFields, ProcessStakeholder } from "../../../types";
 
 
 
@@ -205,6 +209,13 @@ function buildTree(items: ProcessFull[]) {
   return roots;
 }
 
+// Type pour les données de stakeholder avec les champs de lien dans le form
+type StakeholderLinkData = {
+  stakeholderId: string;
+  name: string; // pour l'affichage
+  isActive: boolean;
+} & StakeholderLinkFields;
+
 export default function AdminProcessesPage() {
   const [items, setItems] = useState<ProcessFull[]>([]);
   const [loading, setLoading] = useState(false);
@@ -214,6 +225,9 @@ export default function AdminProcessesPage() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<ProcessFull | null>(null);
   const [activeTab, setActiveTab] = useState<string>("general");
+
+  // Stakeholders du process avec leurs champs de lien
+  const [stakeholderLinks, setStakeholderLinks] = useState<StakeholderLinkData[]>([]);
 
   const [form] = Form.useForm();
 
@@ -264,8 +278,56 @@ export default function AdminProcessesPage() {
   }, [items]);
 
   const stakeholderOptions = useMemo(() => {
-    return stakeholders.map((s) => ({ value: s.name, label: s.name }));
+    return stakeholders.map((s) => ({ value: s.id, label: s.name }));
   }, [stakeholders]);
+
+  const stakeholdersById = useMemo(() => {
+    return new Map(stakeholders.map((s) => [s.id, s]));
+  }, [stakeholders]);
+
+  // Gestion de la sélection des stakeholders (ajoute/retire des links)
+  function handleStakeholderSelection(selectedIds: string[]) {
+    const currentIds = new Set(stakeholderLinks.map((l) => l.stakeholderId));
+    const newIds = new Set(selectedIds);
+
+    // Garder les liens existants pour les IDs toujours sélectionnés
+    const kept = stakeholderLinks.filter((l) => newIds.has(l.stakeholderId));
+
+    // Ajouter de nouveaux liens vides pour les nouveaux IDs
+    const added: StakeholderLinkData[] = selectedIds
+      .filter((id) => !currentIds.has(id))
+      .map((id) => {
+        const s = stakeholdersById.get(id);
+        return {
+          stakeholderId: id,
+          name: s?.name || "?",
+          isActive: s?.isActive ?? true,
+          needs: null,
+          expectations: null,
+          evaluationCriteria: null,
+          requirements: null,
+          strengths: null,
+          weaknesses: null,
+          opportunities: null,
+          risks: null,
+          actionPlan: null,
+        };
+      });
+
+    setStakeholderLinks([...kept, ...added]);
+    form.setFieldsValue({ selectedStakeholderIds: selectedIds });
+  }
+
+  // Mise à jour d'un champ de lien pour un stakeholder
+  function updateLinkField(stakeholderId: string, field: keyof StakeholderLinkFields, value: string | null) {
+    setStakeholderLinks((prev) =>
+      prev.map((l) =>
+        l.stakeholderId === stakeholderId
+          ? { ...l, [field]: value?.trim() || null }
+          : l
+      )
+    );
+  }
 
   const pilotOptions = useMemo(() => {
     return pilots.map((p) => ({ value: p.id, label: p.name }));
@@ -274,6 +336,7 @@ export default function AdminProcessesPage() {
   function openCreate() {
     setEditing(null);
     setActiveTab("general");
+    setStakeholderLinks([]);
     setOpen(true);
 
     form.resetFields();
@@ -285,7 +348,7 @@ export default function AdminProcessesPage() {
       isActive: true,
       title: "",
       objectivesBlocks: [],
-      stakeholders: [],
+      selectedStakeholderIds: [],
       pilotIds: [],
       referenceDocuments: [],
     });
@@ -294,6 +357,7 @@ export default function AdminProcessesPage() {
   async function openEdit(p: ProcessFull) {
     setEditing(p); // optimistic: show drawer immediately
     setActiveTab("general");
+    setStakeholderLinks([]);
     setOpen(true);
 
     // Détermine les objectivesBlocks : utilise les existants ou parse l'ancien string
@@ -315,6 +379,32 @@ export default function AdminProcessesPage() {
       return [];
     };
 
+    // Helper to extract stakeholder links from process
+    const getStakeholderLinks = (proc: ProcessFull): StakeholderLinkData[] => {
+      if (!Array.isArray(proc.stakeholders)) return [];
+      return proc.stakeholders.map((s: ProcessStakeholder) => ({
+        stakeholderId: s.id,
+        name: s.name,
+        isActive: s.isActive,
+        needs: s.link?.needs ?? null,
+        expectations: s.link?.expectations ?? null,
+        evaluationCriteria: s.link?.evaluationCriteria ?? null,
+        requirements: s.link?.requirements ?? null,
+        strengths: s.link?.strengths ?? null,
+        weaknesses: s.link?.weaknesses ?? null,
+        opportunities: s.link?.opportunities ?? null,
+        risks: s.link?.risks ?? null,
+        actionPlan: s.link?.actionPlan ?? null,
+      }));
+    };
+
+    // Helper to extract stakeholder IDs
+    const getStakeholderIds = (proc: ProcessFull): string[] => {
+      if (Array.isArray(proc.stakeholderIds)) return proc.stakeholderIds;
+      if (Array.isArray(proc.stakeholders)) return proc.stakeholders.map((s: ProcessStakeholder) => s.id);
+      return [];
+    };
+
     // populate from lite first
     form.resetFields();
     form.setFieldsValue({
@@ -325,10 +415,11 @@ export default function AdminProcessesPage() {
       isActive: Boolean(p.isActive ?? true),
       title: p.title || "",
       objectivesBlocks: getObjectivesBlocks(p),
-      stakeholders: Array.isArray(p.stakeholders) ? p.stakeholders : [],
+      selectedStakeholderIds: getStakeholderIds(p),
       pilotIds: getPilotIds(p),
       referenceDocuments: normalizeDocs(p.referenceDocuments),
     });
+    setStakeholderLinks(getStakeholderLinks(p));
 
     // then fetch full doc (sipoc/logigramme)
     try {
@@ -343,10 +434,11 @@ export default function AdminProcessesPage() {
         isActive: Boolean(proc.isActive ?? true),
         title: proc.title || "",
         objectivesBlocks: getObjectivesBlocks(proc),
-        stakeholders: Array.isArray(proc.stakeholders) ? proc.stakeholders : [],
+        selectedStakeholderIds: getStakeholderIds(proc),
         pilotIds: getPilotIds(proc),
         referenceDocuments: normalizeDocs(proc.referenceDocuments),
       });
+      setStakeholderLinks(getStakeholderLinks(proc));
     } catch (e) {
       console.warn(e);
     }
@@ -363,18 +455,36 @@ export default function AdminProcessesPage() {
         isActive: Boolean(v.isActive),
         title: String(v.title || ""),
         objectivesBlocks: Array.isArray(v.objectivesBlocks) ? v.objectivesBlocks : [],
-        stakeholders: Array.isArray(v.stakeholders) ? v.stakeholders : [],
         referenceDocuments: Array.isArray(v.referenceDocuments) ? v.referenceDocuments : [],
       };
       const pilotIds: string[] = Array.isArray(v.pilotIds) ? v.pilotIds : [];
+
+      // Préparer les stakeholders avec leurs champs de lien
+      const stakeholderItems: ProcessStakeholderItem[] = stakeholderLinks.map((link) => ({
+        stakeholderId: link.stakeholderId,
+        needs: link.needs,
+        expectations: link.expectations,
+        evaluationCriteria: link.evaluationCriteria,
+        requirements: link.requirements,
+        strengths: link.strengths,
+        weaknesses: link.weaknesses,
+        opportunities: link.opportunities,
+        risks: link.risks,
+        actionPlan: link.actionPlan,
+      }));
 
       if (!payload.code || !payload.name) throw new Error("code et name sont obligatoires");
 
       if (!editing?.id) {
         const createRes = await adminCreateProcess(payload);
         const createdId = createRes.data?.id;
-        if (createdId && pilotIds.length > 0) {
-          await adminSetProcessPilots(createdId, pilotIds);
+        if (createdId) {
+          if (pilotIds.length > 0) {
+            await adminSetProcessPilots(createdId, pilotIds);
+          }
+          if (stakeholderItems.length > 0) {
+            await adminSetProcessStakeholders(createdId, stakeholderItems);
+          }
         }
         message.success("Processus créé");
         setOpen(false);
@@ -384,6 +494,7 @@ export default function AdminProcessesPage() {
 
       await adminPatchProcess(editing.id, payload);
       await adminSetProcessPilots(editing.id, pilotIds);
+      await adminSetProcessStakeholders(editing.id, stakeholderItems);
       message.success("Processus enregistré");
       await reload();
 
@@ -391,6 +502,23 @@ export default function AdminProcessesPage() {
       try {
         const full = await adminGetProcess(editing.id);
         setEditing(full.data as ProcessFull);
+        // Mettre à jour stakeholderLinks
+        if (Array.isArray(full.data?.stakeholders)) {
+          setStakeholderLinks(full.data.stakeholders.map((s: ProcessStakeholder) => ({
+            stakeholderId: s.id,
+            name: s.name,
+            isActive: s.isActive,
+            needs: s.link?.needs ?? null,
+            expectations: s.link?.expectations ?? null,
+            evaluationCriteria: s.link?.evaluationCriteria ?? null,
+            requirements: s.link?.requirements ?? null,
+            strengths: s.link?.strengths ?? null,
+            weaknesses: s.link?.weaknesses ?? null,
+            opportunities: s.link?.opportunities ?? null,
+            risks: s.link?.risks ?? null,
+            actionPlan: s.link?.actionPlan ?? null,
+          })));
+        }
       } catch { }
     } catch (e) {
       message.error(getErrorMessage(e));
@@ -532,7 +660,7 @@ export default function AdminProcessesPage() {
                     />
                   </Form.Item>
 
-                  <Form.Item name="stakeholders" label="Parties intéressées">
+                  <Form.Item name="selectedStakeholderIds" label="Parties intéressées">
                     <Select
                       mode="multiple"
                       options={stakeholderOptions}
@@ -540,8 +668,114 @@ export default function AdminProcessesPage() {
                       filterOption={(input, option) =>
                         (option?.label ?? "").toLowerCase().includes(input.toLowerCase())
                       }
+                      onChange={handleStakeholderSelection}
                     />
                   </Form.Item>
+
+                  {stakeholderLinks.length > 0 && (
+                    <div style={{ marginBottom: 24 }}>
+                      <Typography.Text strong style={{ display: "block", marginBottom: 8 }}>
+                        Détails par partie intéressée
+                      </Typography.Text>
+                      <Collapse
+                        accordion
+                        items={stakeholderLinks.map((link) => ({
+                          key: link.stakeholderId,
+                          label: (
+                            <span>
+                              {link.name}
+                              {!link.isActive && <Tag color="default" style={{ marginLeft: 8 }}>Inactif</Tag>}
+                            </span>
+                          ),
+                          children: (
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                              <div>
+                                <Typography.Text type="secondary" style={{ fontSize: 12 }}>Besoins</Typography.Text>
+                                <Input.TextArea
+                                  rows={2}
+                                  value={link.needs ?? ""}
+                                  onChange={(e) => updateLinkField(link.stakeholderId, "needs", e.target.value)}
+                                  placeholder="Besoins de cette partie intéressée..."
+                                />
+                              </div>
+                              <div>
+                                <Typography.Text type="secondary" style={{ fontSize: 12 }}>Attentes</Typography.Text>
+                                <Input.TextArea
+                                  rows={2}
+                                  value={link.expectations ?? ""}
+                                  onChange={(e) => updateLinkField(link.stakeholderId, "expectations", e.target.value)}
+                                  placeholder="Attentes..."
+                                />
+                              </div>
+                              <div>
+                                <Typography.Text type="secondary" style={{ fontSize: 12 }}>Éléments d'évaluation</Typography.Text>
+                                <Input.TextArea
+                                  rows={2}
+                                  value={link.evaluationCriteria ?? ""}
+                                  onChange={(e) => updateLinkField(link.stakeholderId, "evaluationCriteria", e.target.value)}
+                                  placeholder="Critères d'évaluation..."
+                                />
+                              </div>
+                              <div>
+                                <Typography.Text type="secondary" style={{ fontSize: 12 }}>Exigences</Typography.Text>
+                                <Input.TextArea
+                                  rows={2}
+                                  value={link.requirements ?? ""}
+                                  onChange={(e) => updateLinkField(link.stakeholderId, "requirements", e.target.value)}
+                                  placeholder="Exigences..."
+                                />
+                              </div>
+                              <div>
+                                <Typography.Text type="secondary" style={{ fontSize: 12 }}>Forces</Typography.Text>
+                                <Input.TextArea
+                                  rows={2}
+                                  value={link.strengths ?? ""}
+                                  onChange={(e) => updateLinkField(link.stakeholderId, "strengths", e.target.value)}
+                                  placeholder="Forces..."
+                                />
+                              </div>
+                              <div>
+                                <Typography.Text type="secondary" style={{ fontSize: 12 }}>Faiblesses</Typography.Text>
+                                <Input.TextArea
+                                  rows={2}
+                                  value={link.weaknesses ?? ""}
+                                  onChange={(e) => updateLinkField(link.stakeholderId, "weaknesses", e.target.value)}
+                                  placeholder="Faiblesses..."
+                                />
+                              </div>
+                              <div>
+                                <Typography.Text type="secondary" style={{ fontSize: 12 }}>Opportunités</Typography.Text>
+                                <Input.TextArea
+                                  rows={2}
+                                  value={link.opportunities ?? ""}
+                                  onChange={(e) => updateLinkField(link.stakeholderId, "opportunities", e.target.value)}
+                                  placeholder="Opportunités..."
+                                />
+                              </div>
+                              <div>
+                                <Typography.Text type="secondary" style={{ fontSize: 12 }}>Risques</Typography.Text>
+                                <Input.TextArea
+                                  rows={2}
+                                  value={link.risks ?? ""}
+                                  onChange={(e) => updateLinkField(link.stakeholderId, "risks", e.target.value)}
+                                  placeholder="Risques..."
+                                />
+                              </div>
+                              <div style={{ gridColumn: "1 / -1" }}>
+                                <Typography.Text type="secondary" style={{ fontSize: 12 }}>Plan d'actions</Typography.Text>
+                                <Input.TextArea
+                                  rows={3}
+                                  value={link.actionPlan ?? ""}
+                                  onChange={(e) => updateLinkField(link.stakeholderId, "actionPlan", e.target.value)}
+                                  placeholder="Plan d'actions..."
+                                />
+                              </div>
+                            </div>
+                          ),
+                        }))}
+                      />
+                    </div>
+                  )}
 
                   {/* Reference documents */}
                   <Form.List name="referenceDocuments">

@@ -1,5 +1,6 @@
 import {
   Button,
+  Collapse,
   Drawer,
   Form,
   Input,
@@ -14,7 +15,6 @@ import {
   Row,
   Col,
   Tooltip,
-  Divider,
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { useEffect, useMemo, useState } from "react";
@@ -27,7 +27,10 @@ import {
   adminPatchStakeholder,
   adminSetStakeholderProcesses,
   type Stakeholder,
+  type ProcessWithLink,
+  type StakeholderProcessItem,
 } from "../../../api";
+import type { StakeholderLinkFields } from "../../../types";
 
 type ProcessOption = {
   id: string;
@@ -35,8 +38,16 @@ type ProcessOption = {
   name: string;
 };
 
+// Type pour les données de processus avec les champs de lien dans le form
+type ProcessLinkData = {
+  processId: string;
+  code: string;
+  name: string;
+} & StakeholderLinkFields;
+
 type StakeholderWithProcesses = Stakeholder & {
   processIds?: string[];
+  processes?: ProcessWithLink[];
 };
 
 function getErrorMessage(e: unknown) {
@@ -46,11 +57,6 @@ function getErrorMessage(e: unknown) {
 
 function formatProcessLabel(p: ProcessOption) {
   return `${p.code} — ${p.name}`;
-}
-
-function normalizeText(v: any): string | null {
-  const s = String(v ?? "").trim();
-  return s.length ? s : null;
 }
 
 export default function AdminStakeholdersPage() {
@@ -65,6 +71,9 @@ export default function AdminStakeholdersPage() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<StakeholderWithProcesses | null>(null);
   const [form] = Form.useForm();
+
+  // Process du stakeholder avec leurs champs de lien
+  const [processLinks, setProcessLinks] = useState<ProcessLinkData[]>([]);
 
   const [q, setQ] = useState("");
   const [processFilter, setProcessFilter] = useState<string | null>(null);
@@ -113,26 +122,60 @@ export default function AdminStakeholdersPage() {
     });
   }, [items, q, processFilter]);
 
+  // Gestion de la sélection des process (ajoute/retire des links)
+  function handleProcessSelection(selectedIds: string[]) {
+    const currentIds = new Set(processLinks.map((l) => l.processId));
+    const newIds = new Set(selectedIds);
+
+    // Garder les liens existants pour les IDs toujours sélectionnés
+    const kept = processLinks.filter((l) => newIds.has(l.processId));
+
+    // Ajouter de nouveaux liens vides pour les nouveaux IDs
+    const added: ProcessLinkData[] = selectedIds
+      .filter((id) => !currentIds.has(id))
+      .map((id) => {
+        const p = processById.get(id);
+        return {
+          processId: id,
+          code: p?.code || "?",
+          name: p?.name || "?",
+          needs: null,
+          expectations: null,
+          evaluationCriteria: null,
+          requirements: null,
+          strengths: null,
+          weaknesses: null,
+          opportunities: null,
+          risks: null,
+          actionPlan: null,
+        };
+      });
+
+    setProcessLinks([...kept, ...added]);
+    form.setFieldsValue({ selectedProcessIds: selectedIds });
+  }
+
+  // Mise à jour d'un champ de lien pour un processus
+  function updateLinkField(processId: string, field: keyof StakeholderLinkFields, value: string | null) {
+    setProcessLinks((prev) =>
+      prev.map((l) =>
+        l.processId === processId
+          ? { ...l, [field]: value?.trim() || null }
+          : l
+      )
+    );
+  }
+
   function openCreate() {
     setEditing(null);
+    setProcessLinks([]);
     setOpen(true);
 
     form.resetFields();
     form.setFieldsValue({
       name: "",
       isActive: true,
-      processIds: [],
-
-      // new fields
-      needs: "",
-      expectations: "",
-      evaluationCriteria: "",
-      requirements: "",
-      strengths: "",
-      weaknesses: "",
-      opportunities: "",
-      risks: "",
-      actionPlan: "",
+      selectedProcessIds: [],
     });
   }
 
@@ -140,22 +183,29 @@ export default function AdminStakeholdersPage() {
     setEditing(s);
     setOpen(true);
 
+    // Convertir les processes avec leurs champs de lien
+    const links: ProcessLinkData[] = (s.processes || []).map((p) => ({
+      processId: p.id,
+      code: p.code,
+      name: p.name,
+      needs: p.link?.needs ?? null,
+      expectations: p.link?.expectations ?? null,
+      evaluationCriteria: p.link?.evaluationCriteria ?? null,
+      requirements: p.link?.requirements ?? null,
+      strengths: p.link?.strengths ?? null,
+      weaknesses: p.link?.weaknesses ?? null,
+      opportunities: p.link?.opportunities ?? null,
+      risks: p.link?.risks ?? null,
+      actionPlan: p.link?.actionPlan ?? null,
+    }));
+
+    setProcessLinks(links);
+
     form.resetFields();
     form.setFieldsValue({
       name: s.name || "",
       isActive: Boolean(s.isActive ?? true),
-      processIds: s.processIds || [],
-
-      // new fields
-      needs: s.needs ?? "",
-      expectations: s.expectations ?? "",
-      evaluationCriteria: s.evaluationCriteria ?? "",
-      requirements: s.requirements ?? "",
-      strengths: s.strengths ?? "",
-      weaknesses: s.weaknesses ?? "",
-      opportunities: s.opportunities ?? "",
-      risks: s.risks ?? "",
-      actionPlan: s.actionPlan ?? "",
+      selectedProcessIds: s.processIds || [],
     });
   }
 
@@ -165,22 +215,26 @@ export default function AdminStakeholdersPage() {
 
       const name = String(v.name || "").trim();
       const isActive = Boolean(v.isActive);
-      const processIds: string[] = Array.isArray(v.processIds) ? v.processIds : [];
 
       if (!name) throw new Error("Le nom est obligatoire");
+
+      // Préparer les process avec leurs champs de lien
+      const processItems: StakeholderProcessItem[] = processLinks.map((link) => ({
+        processId: link.processId,
+        needs: link.needs,
+        expectations: link.expectations,
+        evaluationCriteria: link.evaluationCriteria,
+        requirements: link.requirements,
+        strengths: link.strengths,
+        weaknesses: link.weaknesses,
+        opportunities: link.opportunities,
+        risks: link.risks,
+        actionPlan: link.actionPlan,
+      }));
 
       const detailsPayload = {
         name,
         isActive,
-        needs: normalizeText(v.needs),
-        expectations: normalizeText(v.expectations),
-        evaluationCriteria: normalizeText(v.evaluationCriteria),
-        requirements: normalizeText(v.requirements),
-        strengths: normalizeText(v.strengths),
-        weaknesses: normalizeText(v.weaknesses),
-        opportunities: normalizeText(v.opportunities),
-        risks: normalizeText(v.risks),
-        actionPlan: normalizeText(v.actionPlan),
       };
 
       if (!editing?.id) {
@@ -189,7 +243,7 @@ export default function AdminStakeholdersPage() {
           createRes?.data?.id || createRes?.data?.stakeholder?.id;
 
         if (createdId) {
-          await adminSetStakeholderProcesses(createdId, processIds);
+          await adminSetStakeholderProcesses(createdId, processItems);
           message.success("Partie intéressée créée");
           setOpen(false);
           await reload();
@@ -199,7 +253,7 @@ export default function AdminStakeholdersPage() {
         // fallback si le back ne renvoie pas l'id
         await reload();
         const found = items.find((s) => String(s.name || "").trim() === name);
-        if (found?.id) await adminSetStakeholderProcesses(found.id, processIds);
+        if (found?.id) await adminSetStakeholderProcesses(found.id, processItems);
 
         message.success("Partie intéressée créée");
         setOpen(false);
@@ -208,7 +262,7 @@ export default function AdminStakeholdersPage() {
       }
 
       await adminPatchStakeholder(editing.id, detailsPayload);
-      await adminSetStakeholderProcesses(editing.id, processIds);
+      await adminSetStakeholderProcesses(editing.id, processItems);
 
       message.success("Partie intéressée enregistrée");
       setOpen(false);
@@ -330,9 +384,7 @@ export default function AdminStakeholdersPage() {
         scroll={{ x: 980 }}
         expandable={{
           expandedRowRender: (r) => {
-            const list = (r.processIds || [])
-              .map((id) => processById.get(id))
-              .filter(Boolean) as ProcessOption[];
+            const list = (r.processes || []);
 
             if (!list.length) return <Typography.Text type="secondary">Aucun processus</Typography.Text>;
 
@@ -352,7 +404,7 @@ export default function AdminStakeholdersPage() {
         open={open}
         onClose={() => setOpen(false)}
         title={editing ? `Éditer — ${editing.name}` : "Nouvelle partie intéressée"}
-        width={760}
+        width={900}
         destroyOnClose
       >
         <Form form={form} layout="vertical">
@@ -366,7 +418,7 @@ export default function AdminStakeholdersPage() {
             </Form.Item>
           </div>
 
-          <Form.Item name="processIds" label="Processus rattachés">
+          <Form.Item name="selectedProcessIds" label="Processus rattachés">
             <Select
               mode="multiple"
               placeholder="Sélectionnez un ou plusieurs processus"
@@ -376,49 +428,109 @@ export default function AdminStakeholdersPage() {
               optionFilterProp="label"
               allowClear
               maxTagCount="responsive"
+              onChange={handleProcessSelection}
             />
           </Form.Item>
 
-          <Divider style={{ margin: "12px 0" }} />
-
-          {/* New fields */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-            <Form.Item name="needs" label="Besoins (needs)">
-              <Input.TextArea rows={3} />
-            </Form.Item>
-
-            <Form.Item name="expectations" label="Attentes (expectations)">
-              <Input.TextArea rows={3} />
-            </Form.Item>
-
-            <Form.Item name="evaluationCriteria" label="Éléments d’évaluation (evaluationCriteria)">
-              <Input.TextArea rows={3} />
-            </Form.Item>
-
-            <Form.Item name="requirements" label="Exigences (requirements)">
-              <Input.TextArea rows={3} />
-            </Form.Item>
-
-            <Form.Item name="strengths" label="Forces (strengths)">
-              <Input.TextArea rows={3} />
-            </Form.Item>
-
-            <Form.Item name="weaknesses" label="Faiblesses (weaknesses)">
-              <Input.TextArea rows={3} />
-            </Form.Item>
-
-            <Form.Item name="opportunities" label="Opportunités (opportunities)">
-              <Input.TextArea rows={3} />
-            </Form.Item>
-
-            <Form.Item name="risks" label="Risques (risks)">
-              <Input.TextArea rows={3} />
-            </Form.Item>
-          </div>
-
-          <Form.Item name="actionPlan" label="Plan d’actions (actionPlan)">
-            <Input.TextArea rows={5} />
-          </Form.Item>
+          {processLinks.length > 0 && (
+            <div style={{ marginBottom: 24 }}>
+              <Typography.Text strong style={{ display: "block", marginBottom: 8 }}>
+                Détails par processus
+              </Typography.Text>
+              <Collapse
+                accordion
+                items={processLinks.map((link) => ({
+                  key: link.processId,
+                  label: `${link.code} — ${link.name}`,
+                  children: (
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                      <div>
+                        <Typography.Text type="secondary" style={{ fontSize: 12 }}>Besoins</Typography.Text>
+                        <Input.TextArea
+                          rows={2}
+                          value={link.needs ?? ""}
+                          onChange={(e) => updateLinkField(link.processId, "needs", e.target.value)}
+                          placeholder="Besoins pour ce processus..."
+                        />
+                      </div>
+                      <div>
+                        <Typography.Text type="secondary" style={{ fontSize: 12 }}>Attentes</Typography.Text>
+                        <Input.TextArea
+                          rows={2}
+                          value={link.expectations ?? ""}
+                          onChange={(e) => updateLinkField(link.processId, "expectations", e.target.value)}
+                          placeholder="Attentes..."
+                        />
+                      </div>
+                      <div>
+                        <Typography.Text type="secondary" style={{ fontSize: 12 }}>Éléments d'évaluation</Typography.Text>
+                        <Input.TextArea
+                          rows={2}
+                          value={link.evaluationCriteria ?? ""}
+                          onChange={(e) => updateLinkField(link.processId, "evaluationCriteria", e.target.value)}
+                          placeholder="Critères d'évaluation..."
+                        />
+                      </div>
+                      <div>
+                        <Typography.Text type="secondary" style={{ fontSize: 12 }}>Exigences</Typography.Text>
+                        <Input.TextArea
+                          rows={2}
+                          value={link.requirements ?? ""}
+                          onChange={(e) => updateLinkField(link.processId, "requirements", e.target.value)}
+                          placeholder="Exigences..."
+                        />
+                      </div>
+                      <div>
+                        <Typography.Text type="secondary" style={{ fontSize: 12 }}>Forces</Typography.Text>
+                        <Input.TextArea
+                          rows={2}
+                          value={link.strengths ?? ""}
+                          onChange={(e) => updateLinkField(link.processId, "strengths", e.target.value)}
+                          placeholder="Forces..."
+                        />
+                      </div>
+                      <div>
+                        <Typography.Text type="secondary" style={{ fontSize: 12 }}>Faiblesses</Typography.Text>
+                        <Input.TextArea
+                          rows={2}
+                          value={link.weaknesses ?? ""}
+                          onChange={(e) => updateLinkField(link.processId, "weaknesses", e.target.value)}
+                          placeholder="Faiblesses..."
+                        />
+                      </div>
+                      <div>
+                        <Typography.Text type="secondary" style={{ fontSize: 12 }}>Opportunités</Typography.Text>
+                        <Input.TextArea
+                          rows={2}
+                          value={link.opportunities ?? ""}
+                          onChange={(e) => updateLinkField(link.processId, "opportunities", e.target.value)}
+                          placeholder="Opportunités..."
+                        />
+                      </div>
+                      <div>
+                        <Typography.Text type="secondary" style={{ fontSize: 12 }}>Risques</Typography.Text>
+                        <Input.TextArea
+                          rows={2}
+                          value={link.risks ?? ""}
+                          onChange={(e) => updateLinkField(link.processId, "risks", e.target.value)}
+                          placeholder="Risques..."
+                        />
+                      </div>
+                      <div style={{ gridColumn: "1 / -1" }}>
+                        <Typography.Text type="secondary" style={{ fontSize: 12 }}>Plan d'actions</Typography.Text>
+                        <Input.TextArea
+                          rows={3}
+                          value={link.actionPlan ?? ""}
+                          onChange={(e) => updateLinkField(link.processId, "actionPlan", e.target.value)}
+                          placeholder="Plan d'actions..."
+                        />
+                      </div>
+                    </div>
+                  ),
+                }))}
+              />
+            </div>
+          )}
 
           <Space style={{ marginTop: 24 }}>
             <Button type="primary" onClick={saveStakeholder}>
