@@ -99,41 +99,6 @@
   width: 18%;
 }
 
-/* ===================================
-   COLUMN DIVIDERS - HEADER
-   =================================== */
-
-/* Major divider after Ref */
-thead .sipoc-col-ref {
-  border-right: 2px solid #64748b;
-}
-
-/* Major divider after Fournisseur */
-thead .sipoc-col-fournisseur {
-  border-right: 3px solid #334155;
-}
-
-/* Dividers between inner columns */
-thead .sipoc-col-entrees {
-  border-right: 1px solid #94a3b8;
-}
-
-thead .sipoc-col-numero {
-  border-right: 1px solid #94a3b8;
-}
-
-thead .sipoc-col-ressources {
-  border-right: 1px solid #94a3b8;
-}
-
-thead .sipoc-col-designation {
-  border-right: 1px solid #94a3b8;
-}
-
-/* Major divider after Sorties (end of Activite zone) */
-thead .sipoc-col-sorties {
-  border-right: 3px solid #334155;
-}
 
 /* ===================================
    PHASE ROW STYLES
@@ -196,39 +161,6 @@ thead .sipoc-col-sorties {
   vertical-align: middle;
 }
 
-/* Ref column - subtle background */
-.sipoc-td.sipoc-col-ref {
-  background: #f8fafc;
-  border-right: 2px solid #cbd5e1;
-}
-
-/* Major divider after Fournisseur */
-.sipoc-td.sipoc-col-fournisseur {
-  border-right: 3px solid #94a3b8;
-}
-
-/* Inner column dividers */
-.sipoc-td.sipoc-col-entrees {
-  border-right: 1px solid #cbd5e1;
-}
-
-.sipoc-td.sipoc-col-numero {
-  border-right: 1px solid #cbd5e1;
-  text-align: center;
-}
-
-.sipoc-td.sipoc-col-ressources {
-  border-right: 1px solid #cbd5e1;
-}
-
-.sipoc-td.sipoc-col-designation {
-  border-right: 1px solid #cbd5e1;
-}
-
-/* Major divider after Sorties */
-.sipoc-td.sipoc-col-sorties {
-  border-right: 3px solid #94a3b8;
-}
 
 /* Hover state - preserve ref background */
 .sipoc-data-row:hover .sipoc-td.sipoc-col-ref {

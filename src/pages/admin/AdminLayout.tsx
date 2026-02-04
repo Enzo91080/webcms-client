@@ -24,7 +24,7 @@ export default function AdminLayout() {
 
   return (
     <Layout style={{ minHeight: "100vh" }}>
-      <Sider theme="light" width={240}>
+      <Sider theme="light" width={200}>
         <div style={{ padding: 16, fontWeight: 900 }}>Admin</div>
 
         <Menu

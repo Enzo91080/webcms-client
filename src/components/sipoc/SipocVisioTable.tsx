@@ -162,7 +162,6 @@ export function SipocVisioTable(props: SipocVisioTableProps) {
             rows: [
               ...g.rows,
               {
-                ref: `REF-${newRowIndex}`,
                 numero: String(newRowIndex),
                 phase: g.name,
                 processusFournisseur: "",
@@ -267,13 +266,11 @@ export function SipocVisioTable(props: SipocVisioTableProps) {
 
   const isFocused = (r: SipocRow) => {
     if (!focusKey) return false;
-    const ref = String(r?.ref || "");
     const num = String(r?.numero ?? "");
     const activiteName = String(
       r?.activitePhase?.name || r?.designation?.name || ""
     );
     return (
-      ref === focusKey ||
       num === focusKey ||
       activiteName.toLowerCase() === focusKey.toLowerCase()
     );
@@ -404,7 +401,6 @@ export function SipocVisioTable(props: SipocVisioTableProps) {
         <thead>
           {/* Row 1: Main columns with title in center */}
           <tr className="sipoc-header-row-main">
-            <th rowSpan={3} className="sipoc-th sipoc-col-ref">Ref.</th>
             <th rowSpan={3} className="sipoc-th sipoc-col-fournisseur">Processus fournisseur</th>
             <th colSpan={5} className="sipoc-th sipoc-col-activite-header">{props.title}</th>
             <th rowSpan={3} className="sipoc-th sipoc-col-client">Processus client</th>
@@ -429,7 +425,7 @@ export function SipocVisioTable(props: SipocVisioTableProps) {
             <>
               {/* Phase header row */}
               <tr key={`phase-header-${ph.key}`} className="sipoc-phase-row">
-                <td colSpan={8} className="sipoc-phase-cell">
+                <td colSpan={7} className="sipoc-phase-cell">
                   {readOnly ? (
                     <span className="sipoc-phase-title">{ph.name || "Phase"}</span>
                   ) : (
@@ -479,26 +475,29 @@ export function SipocVisioTable(props: SipocVisioTableProps) {
               {/* Data rows for this phase */}
               {(ph.rows || []).map((r, rowIndex) => (
                 <tr
-                  key={String(r?.ref || `${ph.key}-${rowIndex}`)}
+                  key={`${ph.key}-${rowIndex}`}
                   className={`sipoc-data-row ${isFocused(r) ? "sipoc-row-focused" : ""}`}
                 >
-                  {/* Ref */}
-                  <td className="sipoc-td sipoc-col-ref">
+                  {/* Processus fournisseur */}
+                  {/* Processus fournisseur */}
+                  <td className="sipoc-td sipoc-col-fournisseur">
                     {readOnly ? (
-                      <Tag color="blue" style={{ margin: 0, fontWeight: 600 }}>
-                        {r?.ref}
-                      </Tag>
+                      renderCell(
+                        r?.processusFournisseur,
+                        phaseIndex,
+                        rowIndex,
+                        "processusFournisseur",
+                        "Processus fournisseur"
+                      )
                     ) : (
                       <Space>
-                        <Input
-                          size="small"
-                          value={r?.ref || ""}
-                          placeholder="Ref"
-                          style={{ width: 80 }}
-                          onChange={(e) =>
-                            updateRow(phaseIndex, rowIndex, "ref", e.target.value)
-                          }
-                        />
+                        {renderCell(
+                          r?.processusFournisseur,
+                          phaseIndex,
+                          rowIndex,
+                          "processusFournisseur",
+                          "Processus fournisseur"
+                        )}
                         <Popconfirm
                           title="Supprimer cette ligne ?"
                           onConfirm={() => deleteRow(phaseIndex, rowIndex)}
@@ -514,17 +513,6 @@ export function SipocVisioTable(props: SipocVisioTableProps) {
                           />
                         </Popconfirm>
                       </Space>
-                    )}
-                  </td>
-
-                  {/* Processus fournisseur */}
-                  <td className="sipoc-td sipoc-col-fournisseur">
-                    {renderCell(
-                      r?.processusFournisseur,
-                      phaseIndex,
-                      rowIndex,
-                      "processusFournisseur",
-                      "Processus fournisseur"
                     )}
                   </td>
 

@@ -129,16 +129,6 @@ export default function AdminSipocPage() {
 
   return (
     <div style={{ padding: 16 }}>
-      {/* Header */}
-      <div style={{ marginBottom: 24 }}>
-        <Typography.Title level={4} style={{ margin: 0, marginBottom: 8 }}>
-          Edition SIPOC
-        </Typography.Title>
-        <Typography.Text type="secondary">
-          Selectionnez un processus puis editez le tableau SIPOC directement.
-        </Typography.Text>
-      </div>
-
       {/* Process selector + Actions */}
       <Row gutter={[16, 16]} align="middle" justify="space-between" style={{ marginBottom: 24 }}>
         {/* Left: Process selector */}
