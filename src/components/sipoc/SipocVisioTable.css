@@ -1,123 +1,324 @@
-/* SIPOC Card Container */
-.sipoc-card-container {
+/* ===================================
+   SIPOC TABLE CONTAINER
+   =================================== */
+
+.sipoc-table-container {
   width: 100%;
-  border: 2px solid #94a3b8;
-  border-radius: 10px;
   background: white;
-  overflow: hidden;
+  overflow-x: auto;
 }
 
-/* Header Card */
-.sipoc-header-card {
-  border-radius: 0 !important;
-  border: none !important;
-  background: #b8d2ee !important;
+/* ===================================
+   TABLE BASE STYLES
+   =================================== */
+
+.sipoc-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  min-width: 1000px;
 }
 
-.sipoc-header-row {
-  margin: 0 !important;
+/* ===================================
+   HEADER STYLES
+   =================================== */
+
+.sipoc-table thead {
+  background: #b8d2ee;
 }
 
-.sipoc-header-col {
+.sipoc-th {
   border: 1px solid #94a3b8;
   padding: 12px 16px;
   text-align: center;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 60px;
-}
-
-.sipoc-header-col.sipoc-header-processus {
-  padding: 0;
-  flex-direction: column;
-  align-items: stretch;
-}
-
-.sipoc-header-text {
-  color: #000 !important;
-  font-weight: 800 !important;
+  font-weight: 800;
   font-size: 13px;
+  color: #000;
+  vertical-align: middle;
 }
 
-.sipoc-sub-header {
+/* Main header row */
+.sipoc-header-row-main .sipoc-th {
   background: #b8d2ee;
+}
+
+/* Activite title cell */
+.sipoc-col-activite-header {
+  background: #b8d2ee;
+  padding: 12px 16px;
+}
+
+/* Sub-header "Activite" */
+.sipoc-sub-activite {
+  background: #b8d2ee;
+  padding: 8px 16px;
   border-top: 1px solid #94a3b8;
   border-bottom: 1px solid #94a3b8;
-  padding: 8px 16px;
-  text-align: center;
 }
 
-.sipoc-sub-header-text {
-  color: #000 !important;
-  font-weight: 800 !important;
-  font-size: 13px;
-}
-
-.sipoc-sub-sub-header {
-  margin: 0 !important;
-  border-bottom: 1px solid #94a3b8;
-}
-
-.sipoc-sub-header-col {
-  border-right: 1px solid #94a3b8;
-  padding: 8px 12px;
-  text-align: center;
+/* Sub-columns header row */
+.sipoc-header-row-cols .sipoc-th {
   background: #b8d2ee;
-}
-
-.sipoc-sub-header-col:last-child {
-  border-right: none;
-}
-
-.sipoc-phase-header {
-  background: #2563eb;
-  padding: 8px 16px;
-  text-align: center;
-  border-bottom: 1px solid #94a3b8;
-}
-
-.sipoc-phase-text {
-  color: white !important;
-  font-weight: 800 !important;
+  padding: 8px 12px;
   font-size: 13px;
 }
 
-/* Row Cards */
-.sipoc-row-card {
-  border-radius: 0 !important;
-  border-left: none !important;
-  border-right: none !important;
-  border-top: 1px solid #e8e8e8 !important;
-  border-bottom: 1px solid #e8e8e8 !important;
-  margin: 0 !important;
-  transition: all 0.2s;
+/* ===================================
+   COLUMN WIDTHS
+   =================================== */
+
+.sipoc-col-ref {
+  width: 10%;
 }
 
-.sipoc-row-card:hover {
-  background: #fafafa;
+.sipoc-col-fournisseur {
+  width: 14%;
 }
 
-.sipoc-row-card.sipoc-row-focused {
-  background: rgba(59, 130, 246, 0.12) !important;
-  border-left: 3px solid #2563eb !important;
+.sipoc-col-entrees {
+  width: 12%;
 }
 
-/* Links in Designation Column */
-.sipoc-row-card a {
+.sipoc-col-numero {
+  width: 6%;
+}
+
+.sipoc-col-ressources {
+  width: 14%;
+}
+
+.sipoc-col-designation {
+  width: 14%;
+}
+
+.sipoc-col-sorties {
+  width: 12%;
+}
+
+.sipoc-col-client {
+  width: 18%;
+}
+
+/* ===================================
+   COLUMN DIVIDERS - HEADER
+   =================================== */
+
+/* Major divider after Ref */
+thead .sipoc-col-ref {
+  border-right: 2px solid #64748b;
+}
+
+/* Major divider after Fournisseur */
+thead .sipoc-col-fournisseur {
+  border-right: 3px solid #334155;
+}
+
+/* Dividers between inner columns */
+thead .sipoc-col-entrees {
+  border-right: 1px solid #94a3b8;
+}
+
+thead .sipoc-col-numero {
+  border-right: 1px solid #94a3b8;
+}
+
+thead .sipoc-col-ressources {
+  border-right: 1px solid #94a3b8;
+}
+
+thead .sipoc-col-designation {
+  border-right: 1px solid #94a3b8;
+}
+
+/* Major divider after Sorties (end of Activite zone) */
+thead .sipoc-col-sorties {
+  border-right: 3px solid #334155;
+}
+
+/* ===================================
+   PHASE ROW STYLES
+   =================================== */
+
+.sipoc-phase-row {
+  background: linear-gradient(90deg, #2563eb 4px, #dbeafe 4px);
+}
+
+.sipoc-phase-cell {
+  padding: 10px 16px 10px 20px;
+  border: none;
+  border-bottom: 2px solid #2563eb;
+  border-left: 4px solid #2563eb;
+}
+
+.sipoc-phase-title {
+  color: #1e40af;
+  font-weight: 700;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.sipoc-phase-edit {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+/* ===================================
+   DATA ROW STYLES
+   =================================== */
+
+.sipoc-data-row {
+  background: white;
+  transition: background-color 0.2s;
+}
+
+.sipoc-data-row:hover {
+  background: #f1f5f9;
+}
+
+.sipoc-data-row.sipoc-row-focused {
+  background: rgba(59, 130, 246, 0.12);
+}
+
+.sipoc-data-row.sipoc-row-focused .sipoc-col-ref {
+  box-shadow: inset 4px 0 0 #2563eb;
+}
+
+/* ===================================
+   DATA CELLS
+   =================================== */
+
+.sipoc-td {
+  border: 1px solid #e2e8f0;
+  padding: 12px 12px;
+  vertical-align: middle;
+}
+
+/* Ref column - subtle background */
+.sipoc-td.sipoc-col-ref {
+  background: #f8fafc;
+  border-right: 2px solid #cbd5e1;
+}
+
+/* Major divider after Fournisseur */
+.sipoc-td.sipoc-col-fournisseur {
+  border-right: 3px solid #94a3b8;
+}
+
+/* Inner column dividers */
+.sipoc-td.sipoc-col-entrees {
+  border-right: 1px solid #cbd5e1;
+}
+
+.sipoc-td.sipoc-col-numero {
+  border-right: 1px solid #cbd5e1;
+  text-align: center;
+}
+
+.sipoc-td.sipoc-col-ressources {
+  border-right: 1px solid #cbd5e1;
+}
+
+.sipoc-td.sipoc-col-designation {
+  border-right: 1px solid #cbd5e1;
+}
+
+/* Major divider after Sorties */
+.sipoc-td.sipoc-col-sorties {
+  border-right: 3px solid #94a3b8;
+}
+
+/* Hover state - preserve ref background */
+.sipoc-data-row:hover .sipoc-td.sipoc-col-ref {
+  background: #f1f5f9;
+}
+
+.sipoc-data-row.sipoc-row-focused .sipoc-td.sipoc-col-ref {
+  background: rgba(59, 130, 246, 0.15);
+}
+
+/* ===================================
+   LINKS
+   =================================== */
+
+.sipoc-link {
   color: #2563eb;
   font-weight: 700;
   text-decoration: underline;
   cursor: pointer;
 }
 
-.sipoc-row-card a:hover {
+.sipoc-link:hover {
   color: #1d4ed8;
 }
 
-/* Responsive adjustments */
+/* ===================================
+   RACI EDIT MODE
+   =================================== */
+
+.sipoc-raci-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sipoc-raci-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sipoc-raci-row .ant-tag {
+  min-width: 24px;
+  text-align: center;
+}
+
+.sipoc-raci-row .ant-input {
+  flex: 1;
+}
+
+/* ===================================
+   ADD PHASE BUTTON
+   =================================== */
+
+.sipoc-add-phase {
+  margin-top: 16px;
+}
+
+/* ===================================
+   RESPONSIVE
+   =================================== */
+
 @media (max-width: 1200px) {
-  .sipoc-card-container {
+  .sipoc-table-container {
     overflow-x: auto;
   }
+}
+
+/* ===================================
+   EDIT MODE - INPUTS
+   =================================== */
+
+.sipoc-td .ant-input,
+.sipoc-td .ant-input-number,
+.sipoc-td .ant-input-textarea {
+  width: 100%;
+}
+
+.sipoc-td .ant-space {
+  width: 100%;
+}
+
+/* ===================================
+   PHASE SEPARATION (space between phases)
+   =================================== */
+
+.sipoc-phase-row td {
+  padding-top: 20px;
+}
+
+tbody tr:first-child.sipoc-phase-row td {
+  padding-top: 10px;
 }

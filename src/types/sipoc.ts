@@ -15,14 +15,19 @@ export type SipocRow = {
   processusFournisseur?: string;
   entrees?: string;
   ressources?: string;
+  // RACI fields (admin mode)
+  raciR?: string;
+  raciA?: string;
+  raciC?: string;
+  raciI?: string;
   designation?: Designation;
   sorties?: string;
   processusClient?: string;
 
   // Nouveau format
-  designationProcessusVendre?: Designation;
+  designationProcessus?: Designation;
   activitePhase?: Designation;
-  sortiesProcessusVendre?: string;
+  sortiesProcessus?: string;
   designationProcessusClient?: string;
   sortiesProcessusClient?: string;
 };

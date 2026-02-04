@@ -1,6 +1,6 @@
 import { DeleteOutlined, PlusOutlined } from "@ant-design/icons";
-import { Button, Card, Col, Input, Popconfirm, Row, Space, Tag, Tooltip, Typography } from "antd";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Button, Input, InputNumber, Popconfirm, Space, Tag, Tooltip, Typography } from "antd";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { SipocRow, SipocPhase, Designation } from "../../types/sipoc";
 import "./SipocVisioTable.css";
@@ -33,12 +33,12 @@ export function SipocVisioTable(props: SipocVisioTableProps) {
   // Adapter les donnees de l'ancien format vers le nouveau format
   const adaptedRows = useMemo(() => {
     return rows.map((r) => {
-      if (r.activitePhase || r.designationProcessusVendre) return r;
+      if (r.activitePhase || r.designationProcessus) return r;
       return {
         ...r,
-        designationProcessusVendre: r.designation,
+        designationProcessus: r.designation,
         activitePhase: r.designation,
-        sortiesProcessusVendre: r.sorties,
+        sortiesProcessus: r.sorties,
         designationProcessusClient: r.processusClient,
         sortiesProcessusClient: r.sortiesProcessusClient || "",
       };
@@ -78,45 +78,49 @@ export function SipocVisioTable(props: SipocVisioTableProps) {
   // Internal state for editable mode
   const [groups, setGroups] = useState<InternalGroup[]>(initialGroups);
 
-  // Sync internal state when props change
+  // Track whether change is internal (user edit) vs external (props change)
+  const isInternalChange = useRef(false);
+
+  // Sync internal state when props change (external)
   useEffect(() => {
-    setGroups(initialGroups);
+    if (!isInternalChange.current) {
+      setGroups(initialGroups);
+    }
+    isInternalChange.current = false;
   }, [initialGroups]);
 
-  // Helper to notify parent of changes
-  const notifyChange = useCallback(
-    (newGroups: InternalGroup[]) => {
-      const phases: SipocPhase[] = newGroups.map((g) => ({
+  // Notify parent of internal changes via useEffect (not during render)
+  useEffect(() => {
+    if (isInternalChange.current && props.onChange) {
+      const phases: SipocPhase[] = groups.map((g) => ({
         key: g.key,
         name: g.name,
         rows: g.rows,
       }));
-      props.onChange?.(phases);
-    },
-    [props.onChange]
-  );
+      props.onChange(phases);
+      isInternalChange.current = false;
+    }
+  }, [groups, props.onChange]);
 
   // Helper to update a phase field (key or name)
   const updatePhase = useCallback(
     (phaseIndex: number, field: "key" | "name", value: string) => {
       if (readOnly) return;
-
       setGroups((prev) => {
         const newGroups = prev.map((g, pi) => {
           if (pi !== phaseIndex) return g;
           return { ...g, [field]: value };
         });
-        notifyChange(newGroups);
+        isInternalChange.current = true;
         return newGroups;
       });
     },
-    [readOnly, notifyChange]
+    [readOnly]
   );
 
   // Helper to add a new phase
   const addPhase = useCallback(() => {
     if (readOnly) return;
-
     setGroups((prev) => {
       const newIndex = prev.length + 1;
       const newGroups = [
@@ -127,30 +131,28 @@ export function SipocVisioTable(props: SipocVisioTableProps) {
           rows: [],
         },
       ];
-      notifyChange(newGroups);
+      isInternalChange.current = true;
       return newGroups;
     });
-  }, [readOnly, notifyChange]);
+  }, [readOnly]);
 
   // Helper to delete a phase
   const deletePhase = useCallback(
     (phaseIndex: number) => {
       if (readOnly) return;
-
       setGroups((prev) => {
         const newGroups = prev.filter((_, pi) => pi !== phaseIndex);
-        notifyChange(newGroups);
+        isInternalChange.current = true;
         return newGroups;
       });
     },
-    [readOnly, notifyChange]
+    [readOnly]
   );
 
   // Helper to add a row to a phase
   const addRow = useCallback(
     (phaseIndex: number) => {
       if (readOnly) return;
-
       setGroups((prev) => {
         const newGroups = prev.map((g, pi) => {
           if (pi !== phaseIndex) return g;
@@ -166,28 +168,31 @@ export function SipocVisioTable(props: SipocVisioTableProps) {
                 processusFournisseur: "",
                 entrees: "",
                 ressources: "",
+                raciR: "",
+                raciA: "",
+                raciC: "",
+                raciI: "",
                 designation: { name: "", url: "" },
-                designationProcessusVendre: { name: "", url: "" },
+                designationProcessus: { name: "", url: "" },
                 sorties: "",
-                sortiesProcessusVendre: "",
+                sortiesProcessus: "",
                 processusClient: "",
                 designationProcessusClient: "",
               },
             ],
           };
         });
-        notifyChange(newGroups);
+        isInternalChange.current = true;
         return newGroups;
       });
     },
-    [readOnly, notifyChange]
+    [readOnly]
   );
 
   // Helper to delete a row
   const deleteRow = useCallback(
     (phaseIndex: number, rowIndex: number) => {
       if (readOnly) return;
-
       setGroups((prev) => {
         const newGroups = prev.map((g, pi) => {
           if (pi !== phaseIndex) return g;
@@ -196,18 +201,17 @@ export function SipocVisioTable(props: SipocVisioTableProps) {
             rows: g.rows.filter((_, ri) => ri !== rowIndex),
           };
         });
-        notifyChange(newGroups);
+        isInternalChange.current = true;
         return newGroups;
       });
     },
-    [readOnly, notifyChange]
+    [readOnly]
   );
 
   // Helper to update a row field
   const updateRow = useCallback(
     (phaseIndex: number, rowIndex: number, field: keyof SipocRow, value: any) => {
       if (readOnly) return;
-
       setGroups((prev) => {
         const newGroups = prev.map((g, pi) => {
           if (pi !== phaseIndex) return g;
@@ -219,11 +223,11 @@ export function SipocVisioTable(props: SipocVisioTableProps) {
             }),
           };
         });
-        notifyChange(newGroups);
+        isInternalChange.current = true;
         return newGroups;
       });
     },
-    [readOnly, notifyChange]
+    [readOnly]
   );
 
   // Helper to update designation subfield
@@ -231,12 +235,11 @@ export function SipocVisioTable(props: SipocVisioTableProps) {
     (
       phaseIndex: number,
       rowIndex: number,
-      field: "designationProcessusVendre" | "designation",
+      field: "designation",
       subField: keyof Designation,
       value: string
     ) => {
       if (readOnly) return;
-
       setGroups((prev) => {
         const newGroups = prev.map((g, pi) => {
           if (pi !== phaseIndex) return g;
@@ -255,11 +258,11 @@ export function SipocVisioTable(props: SipocVisioTableProps) {
             }),
           };
         });
-        notifyChange(newGroups);
+        isInternalChange.current = true;
         return newGroups;
       });
     },
-    [readOnly, notifyChange]
+    [readOnly]
   );
 
   const isFocused = (r: SipocRow) => {
@@ -296,7 +299,7 @@ export function SipocVisioTable(props: SipocVisioTableProps) {
       return (
         <Tooltip title="Ouvrir le processus">
           <a
-            className="text-[#2563eb] font-bold underline hover:text-[#1d4ed8] cursor-pointer"
+            className="sipoc-link"
             onClick={(e) => {
               e.preventDefault();
               navigate(url);
@@ -310,7 +313,7 @@ export function SipocVisioTable(props: SipocVisioTableProps) {
 
     return (
       <a
-        className="text-[#2563eb] font-bold underline hover:text-[#1d4ed8]"
+        className="sipoc-link"
         href={url}
         target="_blank"
         rel="noreferrer"
@@ -370,7 +373,7 @@ export function SipocVisioTable(props: SipocVisioTableProps) {
             updateDesignation(
               phaseIndex,
               rowIndex,
-              "designationProcessusVendre",
+              "designation",
               "name",
               e.target.value
             )
@@ -384,7 +387,7 @@ export function SipocVisioTable(props: SipocVisioTableProps) {
             updateDesignation(
               phaseIndex,
               rowIndex,
-              "designationProcessusVendre",
+              "designation",
               "url",
               e.target.value
             )
@@ -395,306 +398,271 @@ export function SipocVisioTable(props: SipocVisioTableProps) {
   };
 
   return (
-    <div className="sipoc-card-container">
-      {/* Header Section */}
-      <Card className="sipoc-header-card" bodyStyle={{ padding: 0 }}>
-        <Row gutter={0} className="sipoc-header-row">
-          <Col span={3} className="sipoc-header-col">
-            <Typography.Text strong className="sipoc-header-text">
-              Ref.
-            </Typography.Text>
-          </Col>
-          <Col span={4} className="sipoc-header-col">
-            <Typography.Text strong className="sipoc-header-text">
-              Processus fournisseur
-            </Typography.Text>
-          </Col>
-          <Col span={13} className="sipoc-header-col sipoc-header-processus">
-            <div>
-              <Typography.Text strong className="sipoc-header-text">
-                {props.title}
-              </Typography.Text>
+    <div className="sipoc-table-container">
+      <table className="sipoc-table">
+        {/* Header */}
+        <thead>
+          {/* Row 1: Main columns with title in center */}
+          <tr className="sipoc-header-row-main">
+            <th rowSpan={3} className="sipoc-th sipoc-col-ref">Ref.</th>
+            <th rowSpan={3} className="sipoc-th sipoc-col-fournisseur">Processus fournisseur</th>
+            <th colSpan={5} className="sipoc-th sipoc-col-activite-header">{props.title}</th>
+            <th rowSpan={3} className="sipoc-th sipoc-col-client">Processus client</th>
+          </tr>
+          {/* Row 2: Activite label */}
+          <tr className="sipoc-header-row-sub">
+            <th colSpan={5} className="sipoc-th sipoc-sub-activite">Activite</th>
+          </tr>
+          {/* Row 3: Sub-columns */}
+          <tr className="sipoc-header-row-cols">
+            <th className="sipoc-th sipoc-col-entrees">Entrees</th>
+            <th className="sipoc-th sipoc-col-numero">N</th>
+            <th className="sipoc-th sipoc-col-ressources">Ressources</th>
+            <th className="sipoc-th sipoc-col-designation">Designation</th>
+            <th className="sipoc-th sipoc-col-sorties">Sorties</th>
+          </tr>
+        </thead>
 
-              <div className="sipoc-sub-header">
-                <Typography.Text strong className="sipoc-sub-header-text">
-                  Activite
-                </Typography.Text>
-              </div>
+        {/* Body - grouped by phases */}
+        <tbody>
+          {groups.map((ph, phaseIndex) => (
+            <>
+              {/* Phase header row */}
+              <tr key={`phase-header-${ph.key}`} className="sipoc-phase-row">
+                <td colSpan={8} className="sipoc-phase-cell">
+                  {readOnly ? (
+                    <span className="sipoc-phase-title">{ph.name || "Phase"}</span>
+                  ) : (
+                    <div className="sipoc-phase-edit">
+                      <Space>
+                        <Input
+                          size="small"
+                          value={ph.key || ""}
+                          placeholder="Key"
+                          style={{ width: 100 }}
+                          onChange={(e) => updatePhase(phaseIndex, "key", e.target.value)}
+                        />
+                        <Input
+                          size="small"
+                          value={ph.name || ""}
+                          placeholder="Nom de la phase"
+                          style={{ width: 250 }}
+                          onChange={(e) => updatePhase(phaseIndex, "name", e.target.value)}
+                        />
+                      </Space>
+                      <Space>
+                        <Button
+                          size="small"
+                          icon={<PlusOutlined />}
+                          onClick={() => addRow(phaseIndex)}
+                        >
+                          Ligne
+                        </Button>
+                        <Popconfirm
+                          title="Supprimer cette phase ?"
+                          description="Toutes les lignes de cette phase seront supprimees."
+                          onConfirm={() => deletePhase(phaseIndex)}
+                          okText="Supprimer"
+                          cancelText="Annuler"
+                          okButtonProps={{ danger: true }}
+                        >
+                          <Button size="small" danger icon={<DeleteOutlined />}>
+                            Phase
+                          </Button>
+                        </Popconfirm>
+                      </Space>
+                    </div>
+                  )}
+                </td>
+              </tr>
 
-              <Row gutter={0} className="sipoc-sub-sub-header">
-                <Col span={5} className="sipoc-sub-header-col">
-                  <Typography.Text strong className="sipoc-sub-header-text">
-                    Entrees
-                  </Typography.Text>
-                </Col>
-                <Col span={4} className="sipoc-sub-header-col">
-                  <Typography.Text strong className="sipoc-sub-header-text">
-                    N
-                  </Typography.Text>
-                </Col>
-                <Col span={5} className="sipoc-sub-header-col">
-                  <Typography.Text strong className="sipoc-sub-header-text">
-                    Ressources
-                  </Typography.Text>
-                </Col>
-                <Col span={5} className="sipoc-sub-header-col">
-                  <Typography.Text strong className="sipoc-sub-header-text">
-                    Designation
-                  </Typography.Text>
-                </Col>
-                <Col span={5} className="sipoc-sub-header-col">
-                  <Typography.Text strong className="sipoc-sub-header-text">
-                    Sorties
-                  </Typography.Text>
-                </Col>
-              </Row>
-
-              <div className="sipoc-phase-header">
-                <Typography.Text strong className="sipoc-phase-text">
-                  Phase
-                </Typography.Text>
-              </div>
-            </div>
-          </Col>
-          <Col span={4} className="sipoc-header-col">
-            <Typography.Text strong className="sipoc-header-text">
-              Processus client
-            </Typography.Text>
-          </Col>
-        </Row>
-      </Card>
-
-      {/* Data Rows (groupees par phase) */}
-      <Space direction="vertical" size={12} style={{ width: "100%" }}>
-        {groups.map((ph, phaseIndex) => (
-          <div key={ph.key || ph.name}>
-            {/* Header de phase */}
-            <Card
-              className="sipoc-phase-card"
-              bodyStyle={{ padding: "10px 16px" }}
-              style={{ borderRadius: 12 }}
-            >
-              {readOnly ? (
-                <Typography.Text strong className="sipoc-phase-title">
-                  {ph.name || "Phase"}
-                </Typography.Text>
-              ) : (
-                <Space style={{ width: "100%", justifyContent: "space-between" }}>
-                  <Space>
-                    <Input
-                      size="small"
-                      value={ph.key || ""}
-                      placeholder="Key"
-                      style={{ width: 100 }}
-                      onChange={(e) => updatePhase(phaseIndex, "key", e.target.value)}
-                    />
-                    <Input
-                      size="small"
-                      value={ph.name || ""}
-                      placeholder="Nom de la phase"
-                      style={{ width: 250 }}
-                      onChange={(e) => updatePhase(phaseIndex, "name", e.target.value)}
-                    />
-                  </Space>
-                  <Space>
-                    <Button
-                      size="small"
-                      icon={<PlusOutlined />}
-                      onClick={() => addRow(phaseIndex)}
-                    >
-                      Ligne
-                    </Button>
-                    <Popconfirm
-                      title="Supprimer cette phase ?"
-                      description="Toutes les lignes de cette phase seront supprimees."
-                      onConfirm={() => deletePhase(phaseIndex)}
-                      okText="Supprimer"
-                      cancelText="Annuler"
-                      okButtonProps={{ danger: true }}
-                    >
-                      <Button size="small" danger icon={<DeleteOutlined />}>
-                        Phase
-                      </Button>
-                    </Popconfirm>
-                  </Space>
-                </Space>
-              )}
-            </Card>
-
-            {/* Lignes de la phase */}
-            <Space direction="vertical" size={0} style={{ width: "100%" }}>
+              {/* Data rows for this phase */}
               {(ph.rows || []).map((r, rowIndex) => (
-                <Card
+                <tr
                   key={String(r?.ref || `${ph.key}-${rowIndex}`)}
-                  className={`sipoc-row-card ${isFocused(r) ? "sipoc-row-focused" : ""}`}
-                  bodyStyle={{ padding: "12px 16px" }}
+                  className={`sipoc-data-row ${isFocused(r) ? "sipoc-row-focused" : ""}`}
                 >
-                  <Row gutter={16} align="middle">
-                    <Col span={3}>
-                      {readOnly ? (
-                        <Tag color="blue" style={{ margin: 0, fontWeight: 600 }}>
-                          {r?.ref}
-                        </Tag>
-                      ) : (
-                        <Space>
+                  {/* Ref */}
+                  <td className="sipoc-td sipoc-col-ref">
+                    {readOnly ? (
+                      <Tag color="blue" style={{ margin: 0, fontWeight: 600 }}>
+                        {r?.ref}
+                      </Tag>
+                    ) : (
+                      <Space>
+                        <Input
+                          size="small"
+                          value={r?.ref || ""}
+                          placeholder="Ref"
+                          style={{ width: 80 }}
+                          onChange={(e) =>
+                            updateRow(phaseIndex, rowIndex, "ref", e.target.value)
+                          }
+                        />
+                        <Popconfirm
+                          title="Supprimer cette ligne ?"
+                          onConfirm={() => deleteRow(phaseIndex, rowIndex)}
+                          okText="Supprimer"
+                          cancelText="Annuler"
+                          okButtonProps={{ danger: true }}
+                        >
+                          <Button
+                            size="small"
+                            danger
+                            icon={<DeleteOutlined />}
+                            style={{ minWidth: 24, padding: "0 4px" }}
+                          />
+                        </Popconfirm>
+                      </Space>
+                    )}
+                  </td>
+
+                  {/* Processus fournisseur */}
+                  <td className="sipoc-td sipoc-col-fournisseur">
+                    {renderCell(
+                      r?.processusFournisseur,
+                      phaseIndex,
+                      rowIndex,
+                      "processusFournisseur",
+                      "Processus fournisseur"
+                    )}
+                  </td>
+
+                  {/* Entrees */}
+                  <td className="sipoc-td sipoc-col-entrees">
+                    {readOnly ? (
+                      <Typography.Text type="secondary">{r?.entrees}</Typography.Text>
+                    ) : (
+                      <Input.TextArea
+                        size="small"
+                        value={r?.entrees || ""}
+                        placeholder="Entrees"
+                        autoSize={{ minRows: 1, maxRows: 3 }}
+                        onChange={(e) =>
+                          updateRow(phaseIndex, rowIndex, "entrees", e.target.value)
+                        }
+                      />
+                    )}
+                  </td>
+
+                  {/* Numero */}
+                  <td className="sipoc-td sipoc-col-numero">
+                    {readOnly ? (
+                      <Tag color="default" style={{ margin: 0 }}>
+                        {r?.numero}
+                      </Tag>
+                    ) : (
+                      <InputNumber
+                        size="small"
+                        value={String(r?.numero || "")}
+                        placeholder="N"
+                        onChange={(e) =>
+                          updateRow(phaseIndex, rowIndex, "numero", e?.toString() || "")
+                        }
+                      />
+                    )}
+                  </td>
+
+                  {/* Ressources / RACI */}
+                  <td className="sipoc-td sipoc-col-ressources">
+                    {readOnly ? (
+                      <Typography.Text>{r?.raciR || r?.ressources}</Typography.Text>
+                    ) : (
+                      <div className="sipoc-raci-edit">
+                        <div className="sipoc-raci-row">
+                          <Tag color="green">R</Tag>
                           <Input
                             size="small"
-                            value={r?.ref || ""}
-                            placeholder="Ref"
-                            style={{ width: 80 }}
+                            value={r?.raciR || ""}
+                            placeholder="Responsable"
                             onChange={(e) =>
-                              updateRow(phaseIndex, rowIndex, "ref", e.target.value)
+                              updateRow(phaseIndex, rowIndex, "raciR", e.target.value)
                             }
                           />
-                          <Popconfirm
-                            title="Supprimer cette ligne ?"
-                            onConfirm={() => deleteRow(phaseIndex, rowIndex)}
-                            okText="Supprimer"
-                            cancelText="Annuler"
-                            okButtonProps={{ danger: true }}
-                          >
-                            <Button
-                              size="small"
-                              danger
-                              icon={<DeleteOutlined />}
-                              style={{ minWidth: 24, padding: "0 4px" }}
-                            />
-                          </Popconfirm>
-                        </Space>
-                      )}
-                    </Col>
+                        </div>
+                        <div className="sipoc-raci-row">
+                          <Tag color="red">A</Tag>
+                          <Input
+                            size="small"
+                            value={r?.raciA || ""}
+                            placeholder="Approbateur"
+                            onChange={(e) =>
+                              updateRow(phaseIndex, rowIndex, "raciA", e.target.value)
+                            }
+                          />
+                        </div>
+                        <div className="sipoc-raci-row">
+                          <Tag color="blue">C</Tag>
+                          <Input
+                            size="small"
+                            value={r?.raciC || ""}
+                            placeholder="Consulte"
+                            onChange={(e) =>
+                              updateRow(phaseIndex, rowIndex, "raciC", e.target.value)
+                            }
+                          />
+                        </div>
+                        <div className="sipoc-raci-row">
+                          <Tag color="gold">I</Tag>
+                          <Input
+                            size="small"
+                            value={r?.raciI || ""}
+                            placeholder="Informe"
+                            onChange={(e) =>
+                              updateRow(phaseIndex, rowIndex, "raciI", e.target.value)
+                            }
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </td>
 
-                    <Col span={4}>
-                      {renderCell(
-                        r?.processusFournisseur,
-                        phaseIndex,
-                        rowIndex,
-                        "processusFournisseur",
-                        "Processus fournisseur"
-                      )}
-                    </Col>
+                  {/* Designation */}
+                  <td className="sipoc-td sipoc-col-designation">
+                    {renderDesignationCell(
+                      r?.designationProcessus || r?.designation,
+                      phaseIndex,
+                      rowIndex
+                    )}
+                  </td>
 
-                    <Col span={13}>
-                      <Row gutter={8}>
-                        <Col span={5}>
-                          {readOnly ? (
-                            <Typography.Text type="secondary">
-                              {r?.entrees}
-                            </Typography.Text>
-                          ) : (
-                            <Input.TextArea
-                              size="small"
-                              value={r?.entrees || ""}
-                              placeholder="Entrees"
-                              autoSize={{ minRows: 1, maxRows: 3 }}
-                              onChange={(e) =>
-                                updateRow(
-                                  phaseIndex,
-                                  rowIndex,
-                                  "entrees",
-                                  e.target.value
-                                )
-                              }
-                            />
-                          )}
-                        </Col>
+                  {/* Sorties */}
+                  <td className="sipoc-td sipoc-col-sorties">
+                    {readOnly ? (
+                      <Typography.Text>{r?.sortiesProcessus || r?.sorties}</Typography.Text>
+                    ) : (
+                      <Input.TextArea
+                        size="small"
+                        value={r?.sortiesProcessus || r?.sorties || ""}
+                        placeholder="Sorties"
+                        autoSize={{ minRows: 1, maxRows: 3 }}
+                        onChange={(e) =>
+                          updateRow(phaseIndex, rowIndex, "sortiesProcessus", e.target.value)
+                        }
+                      />
+                    )}
+                  </td>
 
-                        <Col span={4} style={{ textAlign: "center" }}>
-                          {readOnly ? (
-                            <Tag color="default" style={{ margin: 0 }}>
-                              {r?.numero}
-                            </Tag>
-                          ) : (
-                            <Input
-                              size="small"
-                              value={String(r?.numero || "")}
-                              placeholder="N"
-                              onChange={(e) =>
-                                updateRow(
-                                  phaseIndex,
-                                  rowIndex,
-                                  "numero",
-                                  e.target.value
-                                )
-                              }
-                            />
-                          )}
-                        </Col>
-
-                        <Col span={5}>
-                          {readOnly ? (
-                            <Typography.Text>{r?.ressources}</Typography.Text>
-                          ) : (
-                            <Input.TextArea
-                              size="small"
-                              value={r?.ressources || ""}
-                              placeholder="Ressources"
-                              autoSize={{ minRows: 1, maxRows: 3 }}
-                              onChange={(e) =>
-                                updateRow(
-                                  phaseIndex,
-                                  rowIndex,
-                                  "ressources",
-                                  e.target.value
-                                )
-                              }
-                            />
-                          )}
-                        </Col>
-
-                        <Col span={5}>
-                          {renderDesignationCell(
-                            r?.designationProcessusVendre || r?.designation,
-                            phaseIndex,
-                            rowIndex
-                          )}
-                        </Col>
-
-                        <Col span={5}>
-                          {readOnly ? (
-                            <Typography.Text>
-                              {r?.sortiesProcessusVendre || r?.sorties}
-                            </Typography.Text>
-                          ) : (
-                            <Input.TextArea
-                              size="small"
-                              value={r?.sortiesProcessusVendre || r?.sorties || ""}
-                              placeholder="Sorties"
-                              autoSize={{ minRows: 1, maxRows: 3 }}
-                              onChange={(e) =>
-                                updateRow(
-                                  phaseIndex,
-                                  rowIndex,
-                                  "sortiesProcessusVendre",
-                                  e.target.value
-                                )
-                              }
-                            />
-                          )}
-                        </Col>
-                      </Row>
-                    </Col>
-
-                    <Col span={4}>
-                      {renderCell(
-                        r?.designationProcessusClient || r?.processusClient,
-                        phaseIndex,
-                        rowIndex,
-                        "designationProcessusClient",
-                        "Processus client"
-                      )}
-                    </Col>
-                  </Row>
-                </Card>
+                  {/* Processus client */}
+                  <td className="sipoc-td sipoc-col-client">
+                    {renderCell(
+                      r?.designationProcessusClient || r?.processusClient,
+                      phaseIndex,
+                      rowIndex,
+                      "designationProcessusClient",
+                      "Processus client"
+                    )}
+                  </td>
+                </tr>
               ))}
-            </Space>
-          </div>
-        ))}
-      </Space>
+            </>
+          ))}
+        </tbody>
+      </table>
 
       {/* Bouton ajouter phase (mode edition uniquement) */}
       {!readOnly && (
-        <div style={{ marginTop: 16 }}>
+        <div className="sipoc-add-phase">
           <Button type="dashed" icon={<PlusOutlined />} onClick={addPhase} block>
             Ajouter une phase
           </Button>
