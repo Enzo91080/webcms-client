@@ -1,108 +1,237 @@
-/* ===================================
-   SIPOC TABLE CONTAINER
-   =================================== */
+/* =========================================================
+   SIPOC VISIO TABLE — CLEAN STYLES (NO DUPLICATES)
+   - Scroll container
+   - Sticky 3-row header with reliable "borders" (box-shadow)
+   - Phase separators
+   - Readability (zebra + hover + focused)
+   - Compact RACI
+   ========================================================= */
+
+/* -----------------------------
+   Container + Scroll
+------------------------------ */
 
 .sipoc-table-container {
   width: 100%;
-  background: white;
-  overflow-x: auto;
+  background: #fff;
 }
 
-/* ===================================
-   TABLE BASE STYLES
-   =================================== */
+.sipoc-table-scroll {
+  max-height: 70vh;            /* adjust if needed */
+  overflow: auto;              /* vertical + horizontal */
+  scrollbar-gutter: stable;    /* avoids header/body width shift */
+  border: 1px solid #e2e8f0;   /* light frame */
+}
+
+/* ================================
+   RACI - READ ONLY DISPLAY
+   ================================ */
+
+.sipoc-raci-read {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+.sipoc-raci-read > div {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: normal;
+}
+
+/* Harmonisation des tags RACI */
+.sipoc-raci-read .ant-tag {
+  min-width: 22px;
+  height: 20px;
+  line-height: 18px;
+  padding: 0 4px;
+  margin: 0;
+  text-align: center;
+  font-weight: 700;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+/* Texte associé au rôle */
+.sipoc-raci-read span,
+.sipoc-raci-read div {
+  color: #0f172a; /* gris pro (pas noir brutal) */
+}
+
+/* Optionnel : légère aération quand beaucoup de texte */
+.sipoc-raci-read > div:not(:last-child) {
+  padding-bottom: 2px;
+}
+
+
+/* -----------------------------
+   CSS Variables
+------------------------------ */
+
+:root {
+  --sipoc-h1: 44px; /* header row 1 height */
+  --sipoc-h2: 34px; /* header row 2 height */
+  --sipoc-h3: 34px; /* header row 3 height */
+
+  --sipoc-header-bg: #b8d2ee;
+  --sipoc-header-border: #94a3b8;
+
+  --sipoc-cell-border: #e2e8f0;
+  --sipoc-hover-bg: #f1f5f9;
+  --sipoc-zebra-bg: #fafcff;
+}
+
+/* -----------------------------
+   Table Base
+------------------------------ */
 
 .sipoc-table {
   width: 100%;
-  border-collapse: collapse;
-  table-layout: fixed;
   min-width: 1000px;
+  table-layout: fixed;
+
+  /* IMPORTANT for sticky header borders */
+  border-collapse: separate;
+  border-spacing: 0;
 }
 
-/* ===================================
-   HEADER STYLES
-   =================================== */
+/* -----------------------------
+   Column widths (fixed layout)
+------------------------------ */
+
+.sipoc-col-fournisseur { width: 14%; }
+.sipoc-col-entrees     { width: 12%; }
+.sipoc-col-numero      { width: 6%;  text-align: center; }
+.sipoc-col-ressources  { width: 14%; }
+.sipoc-col-designation { width: 14%; }
+.sipoc-col-sorties     { width: 12%; }
+.sipoc-col-client      { width: 18%; }
+
+/* =========================================================
+   HEADER (Sticky, 3 rows)
+   ========================================================= */
 
 .sipoc-table thead {
-  background: #b8d2ee;
+  background: var(--sipoc-header-bg);
+  position: relative;
+  z-index: 50;
 }
 
+/* Base TH styles */
 .sipoc-th {
-  border: 1px solid #94a3b8;
-  padding: 12px 16px;
+  border: 0;
   text-align: center;
   font-weight: 800;
   font-size: 13px;
   color: #000;
   vertical-align: middle;
+
+  position: sticky;
+  z-index: 10;
+  background: var(--sipoc-header-bg);
+  background-clip: padding-box;
+
+  /* "Borders" that don't disappear with sticky */
+  box-shadow:
+    inset -1px 0 0 var(--sipoc-header-border), /* right line */
+    inset 0 -1px 0 var(--sipoc-header-border); /* bottom line */
 }
 
-/* Main header row */
+/* Left line for the first header cell of each header row */
+.sipoc-header-row-main .sipoc-th:first-child,
+.sipoc-header-row-sub  .sipoc-th:first-child,
+.sipoc-header-row-cols .sipoc-th:first-child {
+  box-shadow:
+    inset 1px 0 0 var(--sipoc-header-border),  /* left line */
+    inset -1px 0 0 var(--sipoc-header-border), /* right line */
+    inset 0 -1px 0 var(--sipoc-header-border); /* bottom line */
+}
+
+/* Top line for row 1 header */
 .sipoc-header-row-main .sipoc-th {
-  background: #b8d2ee;
+  box-shadow:
+    inset 0 1px 0 var(--sipoc-header-border),  /* top line */
+    inset -1px 0 0 var(--sipoc-header-border),
+    inset 0 -1px 0 var(--sipoc-header-border);
+}
+.sipoc-header-row-main .sipoc-th:first-child {
+  box-shadow:
+    inset 0 1px 0 var(--sipoc-header-border),
+    inset 1px 0 0 var(--sipoc-header-border),
+    inset -1px 0 0 var(--sipoc-header-border),
+    inset 0 -1px 0 var(--sipoc-header-border);
 }
 
-/* Activite title cell */
-.sipoc-col-activite-header {
-  background: #b8d2ee;
-  padding: 12px 16px;
+/* Sticky offsets + heights */
+.sipoc-header-row-main .sipoc-th {
+  top: 0;
+  z-index: 30;
+  height: var(--sipoc-h1);
+  padding: 10px 16px;
 }
 
-/* Sub-header "Activite" */
-.sipoc-sub-activite {
-  background: #b8d2ee;
+.sipoc-header-row-sub .sipoc-th {
+  top: var(--sipoc-h1);
+  z-index: 25;
+  height: var(--sipoc-h2);
   padding: 8px 16px;
-  border-top: 1px solid #94a3b8;
-  border-bottom: 1px solid #94a3b8;
 }
 
-/* Sub-columns header row */
 .sipoc-header-row-cols .sipoc-th {
-  background: #b8d2ee;
+  top: calc(var(--sipoc-h1) + var(--sipoc-h2));
+  z-index: 20;
+  height: var(--sipoc-h3);
   padding: 8px 12px;
-  font-size: 13px;
+
+  /* thicker bottom separation header/body */
+  box-shadow:
+    inset -1px 0 0 var(--sipoc-header-border),
+    inset 0 -2px 0 var(--sipoc-header-border);
+}
+.sipoc-header-row-cols .sipoc-th:first-child {
+  box-shadow:
+    inset 1px 0 0 var(--sipoc-header-border),
+    inset -1px 0 0 var(--sipoc-header-border),
+    inset 0 -2px 0 var(--sipoc-header-border);
 }
 
-/* ===================================
-   COLUMN WIDTHS
-   =================================== */
-
-.sipoc-col-ref {
-  width: 10%;
+/* rowSpan=3 header cells (fournisseur/client) must cover the 3 header heights */
+.sipoc-header-row-main .sipoc-th.sipoc-col-fournisseur,
+.sipoc-header-row-main .sipoc-th.sipoc-col-client {
+  height: calc(var(--sipoc-h1) + var(--sipoc-h2) + var(--sipoc-h3));
 }
 
-.sipoc-col-fournisseur {
-  width: 14%;
+/* =========================================================
+   BODY CELLS + ROWS
+   ========================================================= */
+
+.sipoc-td {
+  border: 1px solid var(--sipoc-cell-border);
+  padding: 10px 10px;
+  vertical-align: middle;
+  background: #fff;
 }
 
-.sipoc-col-entrees {
-  width: 12%;
+/* zebra for readability */
+.sipoc-data-row:nth-child(even) .sipoc-td {
+  background: var(--sipoc-zebra-bg);
 }
 
-.sipoc-col-numero {
-  width: 6%;
+.sipoc-data-row:hover .sipoc-td {
+  background: var(--sipoc-hover-bg);
 }
 
-.sipoc-col-ressources {
-  width: 14%;
+/* focused row */
+.sipoc-data-row.sipoc-row-focused .sipoc-td {
+  background: rgba(59, 130, 246, 0.10);
 }
 
-.sipoc-col-designation {
-  width: 14%;
-}
-
-.sipoc-col-sorties {
-  width: 12%;
-}
-
-.sipoc-col-client {
-  width: 18%;
-}
-
-
-/* ===================================
-   PHASE ROW STYLES
-   =================================== */
+/* =========================================================
+   PHASE ROW
+   ========================================================= */
 
 .sipoc-phase-row {
   background: linear-gradient(90deg, #2563eb 4px, #dbeafe 4px);
@@ -113,12 +242,18 @@
   border: none;
   border-bottom: 2px solid #2563eb;
   border-left: 4px solid #2563eb;
+  background: #dbeafe;
+}
+
+/* spacing between phases without tbody hacks */
+.sipoc-phase-row:not(:first-child) .sipoc-phase-cell {
+  border-top: 10px solid #fff;
 }
 
 .sipoc-phase-title {
   color: #1e40af;
-  font-weight: 700;
-  font-size: 14px;
+  font-weight: 800;
+  font-size: 13px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -130,50 +265,9 @@
   width: 100%;
 }
 
-/* ===================================
-   DATA ROW STYLES
-   =================================== */
-
-.sipoc-data-row {
-  background: white;
-  transition: background-color 0.2s;
-}
-
-.sipoc-data-row:hover {
-  background: #f1f5f9;
-}
-
-.sipoc-data-row.sipoc-row-focused {
-  background: rgba(59, 130, 246, 0.12);
-}
-
-.sipoc-data-row.sipoc-row-focused .sipoc-col-ref {
-  box-shadow: inset 4px 0 0 #2563eb;
-}
-
-/* ===================================
-   DATA CELLS
-   =================================== */
-
-.sipoc-td {
-  border: 1px solid #e2e8f0;
-  padding: 12px 12px;
-  vertical-align: middle;
-}
-
-
-/* Hover state - preserve ref background */
-.sipoc-data-row:hover .sipoc-td.sipoc-col-ref {
-  background: #f1f5f9;
-}
-
-.sipoc-data-row.sipoc-row-focused .sipoc-td.sipoc-col-ref {
-  background: rgba(59, 130, 246, 0.15);
-}
-
-/* ===================================
+/* =========================================================
    LINKS
-   =================================== */
+   ========================================================= */
 
 .sipoc-link {
   color: #2563eb;
@@ -181,14 +275,44 @@
   text-decoration: underline;
   cursor: pointer;
 }
-
 .sipoc-link:hover {
   color: #1d4ed8;
 }
 
-/* ===================================
-   RACI EDIT MODE
-   =================================== */
+/* =========================================================
+   EDIT MODE — Inputs
+   ========================================================= */
+
+.sipoc-td .ant-input,
+.sipoc-td .ant-input-number,
+.sipoc-td .ant-input-number-input,
+.sipoc-td .ant-input-textarea {
+  width: 100%;
+}
+
+/* reduce "form noise" */
+.sipoc-td .ant-input,
+.sipoc-td .ant-input-number {
+  border-color: var(--sipoc-cell-border);
+}
+
+.sipoc-td .ant-input:focus,
+.sipoc-td .ant-input-number:focus,
+.sipoc-td .ant-input-focused,
+.sipoc-td .ant-input-number-focused {
+  border-color: var(--sipoc-header-border);
+  box-shadow: none;
+}
+
+/* Space fill */
+.sipoc-td .ant-space {
+  width: 100%;
+  justify-content: space-between;
+}
+
+/* =========================================================
+   RACI (compact)
+   ========================================================= */
 
 .sipoc-raci-edit {
   display: flex;
@@ -199,58 +323,38 @@
 .sipoc-raci-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .sipoc-raci-row .ant-tag {
-  min-width: 24px;
+  min-width: 22px;
+  height: 20px;
+  line-height: 18px;
+  padding: 0 4px;
+  margin: 0;
   text-align: center;
+  font-weight: 700;
+  border-radius: 4px;
 }
 
 .sipoc-raci-row .ant-input {
-  flex: 1;
+  height: 28px;
 }
 
-/* ===================================
-   ADD PHASE BUTTON
-   =================================== */
+/* =========================================================
+   Add Phase button
+   ========================================================= */
 
 .sipoc-add-phase {
   margin-top: 16px;
 }
 
-/* ===================================
-   RESPONSIVE
-   =================================== */
+/* =========================================================
+   Responsive
+   ========================================================= */
 
 @media (max-width: 1200px) {
-  .sipoc-table-container {
-    overflow-x: auto;
+  .sipoc-table-scroll {
+    max-height: 65vh;
   }
-}
-
-/* ===================================
-   EDIT MODE - INPUTS
-   =================================== */
-
-.sipoc-td .ant-input,
-.sipoc-td .ant-input-number,
-.sipoc-td .ant-input-textarea {
-  width: 100%;
-}
-
-.sipoc-td .ant-space {
-  width: 100%;
-}
-
-/* ===================================
-   PHASE SEPARATION (space between phases)
-   =================================== */
-
-.sipoc-phase-row td {
-  padding-top: 20px;
-}
-
-tbody tr:first-child.sipoc-phase-row td {
-  padding-top: 10px;
 }

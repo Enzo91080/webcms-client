@@ -26,7 +26,7 @@ export default function SipocModal({ open, onClose, rows, focusRef, title }: Pro
     >
       {rows && rows.length ? (
         <div style={{ maxHeight: "70vh", overflow: "auto" }}>
-          <SipocVisioTable title={title || "SIPOC"} rows={rows} phases={undefined} focusRef={focusRef} />
+          <SipocVisioTable  title={title || "SIPOC"} rows={rows} phases={undefined} focusRef={focusRef} />
         </div>
       ) : (
         <Alert
