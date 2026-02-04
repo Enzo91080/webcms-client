@@ -11,7 +11,6 @@ import {
   Tag,
   Typography,
   message,
-  Popover,
   Row,
   Col,
   Tooltip,
@@ -49,6 +48,10 @@ function formatProcessLabel(p: ProcessOption) {
   return `${p.code} — ${p.name}`;
 }
 
+function normalizeText(v: any): string | null {
+  const s = String(v ?? "").trim();
+  return s.length ? s : null;
+}
 
 export default function AdminStakeholdersPage() {
   const [items, setItems] = useState<StakeholderWithProcesses[]>([]);
@@ -119,6 +122,17 @@ export default function AdminStakeholdersPage() {
       name: "",
       isActive: true,
       processIds: [],
+
+      // new fields
+      needs: "",
+      expectations: "",
+      evaluationCriteria: "",
+      requirements: "",
+      strengths: "",
+      weaknesses: "",
+      opportunities: "",
+      risks: "",
+      actionPlan: "",
     });
   }
 
@@ -131,21 +145,48 @@ export default function AdminStakeholdersPage() {
       name: s.name || "",
       isActive: Boolean(s.isActive ?? true),
       processIds: s.processIds || [],
+
+      // new fields
+      needs: s.needs ?? "",
+      expectations: s.expectations ?? "",
+      evaluationCriteria: s.evaluationCriteria ?? "",
+      requirements: s.requirements ?? "",
+      strengths: s.strengths ?? "",
+      weaknesses: s.weaknesses ?? "",
+      opportunities: s.opportunities ?? "",
+      risks: s.risks ?? "",
+      actionPlan: s.actionPlan ?? "",
     });
   }
 
   async function saveStakeholder() {
     try {
       const v = await form.validateFields();
+
       const name = String(v.name || "").trim();
       const isActive = Boolean(v.isActive);
       const processIds: string[] = Array.isArray(v.processIds) ? v.processIds : [];
 
       if (!name) throw new Error("Le nom est obligatoire");
 
+      const detailsPayload = {
+        name,
+        isActive,
+        needs: normalizeText(v.needs),
+        expectations: normalizeText(v.expectations),
+        evaluationCriteria: normalizeText(v.evaluationCriteria),
+        requirements: normalizeText(v.requirements),
+        strengths: normalizeText(v.strengths),
+        weaknesses: normalizeText(v.weaknesses),
+        opportunities: normalizeText(v.opportunities),
+        risks: normalizeText(v.risks),
+        actionPlan: normalizeText(v.actionPlan),
+      };
+
       if (!editing?.id) {
-        const createRes: any = await adminCreateStakeholder({ name });
-        const createdId: string | undefined = createRes?.data?.id || createRes?.data?.stakeholder?.id;
+        const createRes: any = await adminCreateStakeholder(detailsPayload);
+        const createdId: string | undefined =
+          createRes?.data?.id || createRes?.data?.stakeholder?.id;
 
         if (createdId) {
           await adminSetStakeholderProcesses(createdId, processIds);
@@ -155,6 +196,7 @@ export default function AdminStakeholdersPage() {
           return;
         }
 
+        // fallback si le back ne renvoie pas l'id
         await reload();
         const found = items.find((s) => String(s.name || "").trim() === name);
         if (found?.id) await adminSetStakeholderProcesses(found.id, processIds);
@@ -165,7 +207,7 @@ export default function AdminStakeholdersPage() {
         return;
       }
 
-      await adminPatchStakeholder(editing.id, { name, isActive });
+      await adminPatchStakeholder(editing.id, detailsPayload);
       await adminSetStakeholderProcesses(editing.id, processIds);
 
       message.success("Partie intéressée enregistrée");
@@ -195,7 +237,6 @@ export default function AdminStakeholdersPage() {
       width: 260,
       sorter: (a, b) => String(a.name || "").localeCompare(String(b.name || "")),
     },
-
     {
       title: "Statut",
       key: "isActive",
@@ -231,15 +272,12 @@ export default function AdminStakeholdersPage() {
 
   return (
     <div style={{ padding: 16 }}>
-      {/* Header + Toolbar */}
       <Row gutter={[16, 16]} align="middle" justify="space-between" style={{ marginBottom: 12 }}>
         <Col flex="auto">
           <Typography.Title level={4} style={{ margin: 0 }}>
             Parties intéressées
           </Typography.Title>
-          <Typography.Text type="secondary">
-            {filteredItems.length} élément(s) affiché(s)
-          </Typography.Text>
+          <Typography.Text type="secondary">{filteredItems.length} élément(s) affiché(s)</Typography.Text>
         </Col>
 
         <Col flex="none">
@@ -290,12 +328,12 @@ export default function AdminStakeholdersPage() {
         pagination={{ pageSize: 8, showSizeChanger: false }}
         tableLayout="fixed"
         scroll={{ x: 980 }}
-        // Optionnel : afficher tous les processus en détail en “expanded row”
         expandable={{
           expandedRowRender: (r) => {
             const list = (r.processIds || [])
               .map((id) => processById.get(id))
               .filter(Boolean) as ProcessOption[];
+
             if (!list.length) return <Typography.Text type="secondary">Aucun processus</Typography.Text>;
 
             return (
@@ -314,23 +352,26 @@ export default function AdminStakeholdersPage() {
         open={open}
         onClose={() => setOpen(false)}
         title={editing ? `Éditer — ${editing.name}` : "Nouvelle partie intéressée"}
-        width={560}
+        width={760}
         destroyOnClose
       >
         <Form form={form} layout="vertical">
-          <Form.Item name="name" label="Nom" rules={[{ required: true, message: "Nom requis" }]}>
-            <Input placeholder="Ex: ADV, Direction, Client..." />
-          </Form.Item>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 240px", gap: 12 }}>
+            <Form.Item name="name" label="Nom" rules={[{ required: true, message: "Nom requis" }]}>
+              <Input placeholder="Ex: ADV, Direction, Client..." />
+            </Form.Item>
+
+            <Form.Item name="isActive" label="Actif" valuePropName="checked">
+              <Switch />
+            </Form.Item>
+          </div>
 
           <Form.Item name="processIds" label="Processus rattachés">
             <Select
               mode="multiple"
               placeholder="Sélectionnez un ou plusieurs processus"
               loading={loadingProcesses}
-              options={processes.map((p) => ({
-                value: p.id,
-                label: formatProcessLabel(p),
-              }))}
+              options={processes.map((p) => ({ value: p.id, label: formatProcessLabel(p) }))}
               showSearch
               optionFilterProp="label"
               allowClear
@@ -340,8 +381,43 @@ export default function AdminStakeholdersPage() {
 
           <Divider style={{ margin: "12px 0" }} />
 
-          <Form.Item name="isActive" label="Actif" valuePropName="checked">
-            <Switch />
+          {/* New fields */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <Form.Item name="needs" label="Besoins (needs)">
+              <Input.TextArea rows={3} />
+            </Form.Item>
+
+            <Form.Item name="expectations" label="Attentes (expectations)">
+              <Input.TextArea rows={3} />
+            </Form.Item>
+
+            <Form.Item name="evaluationCriteria" label="Éléments d’évaluation (evaluationCriteria)">
+              <Input.TextArea rows={3} />
+            </Form.Item>
+
+            <Form.Item name="requirements" label="Exigences (requirements)">
+              <Input.TextArea rows={3} />
+            </Form.Item>
+
+            <Form.Item name="strengths" label="Forces (strengths)">
+              <Input.TextArea rows={3} />
+            </Form.Item>
+
+            <Form.Item name="weaknesses" label="Faiblesses (weaknesses)">
+              <Input.TextArea rows={3} />
+            </Form.Item>
+
+            <Form.Item name="opportunities" label="Opportunités (opportunities)">
+              <Input.TextArea rows={3} />
+            </Form.Item>
+
+            <Form.Item name="risks" label="Risques (risks)">
+              <Input.TextArea rows={3} />
+            </Form.Item>
+          </div>
+
+          <Form.Item name="actionPlan" label="Plan d’actions (actionPlan)">
+            <Input.TextArea rows={5} />
           </Form.Item>
 
           <Space style={{ marginTop: 24 }}>

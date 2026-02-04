@@ -11,33 +11,57 @@ export type Stakeholder = {
   name: string;
   isActive: boolean;
 
-  // ✅ Pour le form (Select multiple)
-  processIds: string[];
+  // Relation (many-to-many)
+  processIds?: string[];       // pour le form (Select multiple)
+  processes?: ProcessRef[];    // pour l'affichage (Tags "P02 — Vendre")
 
-  // ✅ Pour l'affichage (Tags "P02 — Vendre")
-  processes?: ProcessRef[];
+  // New fields (English) — free text
+  needs?: string | null;
+  expectations?: string | null;
+  evaluationCriteria?: string | null;
+  requirements?: string | null;
+  strengths?: string | null;
+  weaknesses?: string | null;
+  opportunities?: string | null;
+  risks?: string | null;
+  actionPlan?: string | null;
 
   createdAt?: string;
   updatedAt?: string;
 };
 
+// Payloads (clean & token-friendly)
+export type CreateStakeholderPayload = {
+  name: string;
+  isActive?: boolean;
+
+  needs?: string | null;
+  expectations?: string | null;
+  evaluationCriteria?: string | null;
+  requirements?: string | null;
+  strengths?: string | null;
+  weaknesses?: string | null;
+  opportunities?: string | null;
+  risks?: string | null;
+  actionPlan?: string | null;
+};
+
+export type PatchStakeholderPayload = Partial<CreateStakeholderPayload>;
+
 // Admin endpoints
 export async function adminListStakeholders() {
-  // ✅ Le back doit renvoyer data: Stakeholder[] avec processIds + processes
+  // back should return data: Stakeholder[] with processIds and/or processes
   return request<{ data: Stakeholder[] }>("/api/admin/stakeholders");
 }
 
-export async function adminCreateStakeholder(payload: { name: string }) {
+export async function adminCreateStakeholder(payload: CreateStakeholderPayload) {
   return request<{ data: Stakeholder }>("/api/admin/stakeholders", {
     method: "POST",
     body: JSON.stringify(payload),
   });
 }
 
-export async function adminPatchStakeholder(
-  id: string,
-  patch: Partial<Pick<Stakeholder, "name" | "isActive">>
-) {
+export async function adminPatchStakeholder(id: string, patch: PatchStakeholderPayload) {
   return request<{ data: Stakeholder }>(`/api/admin/stakeholders/${id}`, {
     method: "PATCH",
     body: JSON.stringify(patch),
@@ -51,8 +75,6 @@ export async function adminDeleteStakeholder(id: string) {
 }
 
 export async function adminSetStakeholderProcesses(id: string, processIds: string[]) {
-  // ✅ Idéalement le back renvoie la liste mise à jour
-  // (au minimum ok + processIds; si tu peux, ajoute aussi processes)
   return request<{
     data: {
       ok: true;
