@@ -172,7 +172,7 @@ export default function ObjectivesBlocksEditor({ value = [], onChange }: Props) 
                 onClick={() => addListItem(blockIndex)}
                 style={{ marginTop: 4 }}
               >
-                Ajouter un \u00e9l\u00e9ment
+                Ajouter un élément
               </Button>
             </div>
           )}

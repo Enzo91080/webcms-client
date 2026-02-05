@@ -99,8 +99,9 @@ export default function AdminStakeholdersPage() {
   }
 
   function updateLinkField(processId: string, field: keyof StakeholderLinkFields, value: string | null) {
+    // Don't trim during editing - preserve spaces and newlines as typed
     setProcessLinks((prev) =>
-      prev.map((l) => (l.processId === processId ? { ...l, [field]: value?.trim() || null } : l))
+      prev.map((l) => (l.processId === processId ? { ...l, [field]: value || null } : l))
     );
   }
 

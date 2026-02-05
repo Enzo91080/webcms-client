@@ -24,22 +24,46 @@
 }
 
 /* ================================
-   RACI - READ ONLY DISPLAY
+   RACI - READ ONLY DISPLAY (table-like)
    ================================ */
 
 .sipoc-raci-read {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+  display: table;
+  width: 100%;
   font-size: 13px;
-  line-height: 1.2;
+  line-height: 1.4;
+  border-collapse: collapse;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  overflow: hidden;
 }
 
-.sipoc-raci-read > div {
-  display: flex;
-  align-items: flex-start;
-  gap: 6px;
-  white-space: normal;
+/* Each RACI letter block (R, A, C, I) = table row */
+.sipoc-raci-block {
+  display: table-row;
+}
+
+/* Tag cell (left) */
+.sipoc-raci-block-tag {
+  display: table-cell;
+  vertical-align: top;
+  padding: 6px 8px;
+  border: 1px solid #e2e8f0;
+  width: 36px;
+  text-align: center;
+}
+
+/* Content cell (right) */
+.sipoc-raci-block-content {
+  display: table-cell;
+  vertical-align: top;
+  padding: 6px 10px;
+  border: 1px solid #e2e8f0;
+  color: #0f172a;
+}
+
+.sipoc-raci-block-content > div {
+  padding: 1px 0;
 }
 
 /* Harmonisation des tags RACI */
@@ -53,17 +77,6 @@
   font-weight: 700;
   border-radius: 4px;
   font-size: 12px;
-}
-
-/* Texte associé au rôle */
-.sipoc-raci-read span,
-.sipoc-raci-read div {
-  color: #0f172a; /* gris pro (pas noir brutal) */
-}
-
-/* Optionnel : légère aération quand beaucoup de texte */
-.sipoc-raci-read > div:not(:last-child) {
-  padding-bottom: 2px;
 }
 
 

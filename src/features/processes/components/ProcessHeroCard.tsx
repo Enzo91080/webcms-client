@@ -299,6 +299,7 @@ export function ProcessHeroCard({
 
               {/* Stakeholder Detail Modal */}
               <Modal
+                // taille large pour éviter les retours à la ligne dans les tableaux
                 open={!!selectedStakeholder}
                 onCancel={() => setSelectedStakeholder(null)}
                 title={
@@ -312,7 +313,7 @@ export function ProcessHeroCard({
                     Fermer
                   </Button>
                 }
-                width={900}
+                width={1300}
               >
                 <Table
                   dataSource={selectedStakeholder ? [selectedStakeholder] : []}

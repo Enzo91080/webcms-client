@@ -522,33 +522,36 @@ export function SipocVisioTable(props: SipocVisioTableProps) {
 
                           const hasRaci = R || A || C || I;
 
+                          // Render a RACI block as a table row with tag cell + content cell
+                          const renderRaciBlock = (
+                            letter: string,
+                            content: string,
+                            color: "green" | "red" | "blue" | "gold"
+                          ) => {
+                            const lines = content.split("\n").filter((l) => l.trim());
+                            if (lines.length === 0) return null;
+
+                            return (
+                              <div className="sipoc-raci-block">
+                                <div className="sipoc-raci-block-tag">
+                                  <Tag color={color}>{letter}</Tag>
+                                </div>
+                                <div className="sipoc-raci-block-content">
+                                  {lines.map((line, idx) => (
+                                    <div key={idx}>{line}</div>
+                                  ))}
+                                </div>
+                              </div>
+                            );
+                          };
+
                           if (hasRaci) {
                             return (
                               <div className="sipoc-raci-read">
-                                {R && (
-                                  <div>
-                                    <Tag color="green">R</Tag>
-                                    <span style={{ whiteSpace: "pre-line" }}>{R}</span>
-                                  </div>
-                                )}
-                                {A && (
-                                  <div>
-                                    <Tag color="red">A</Tag>
-                                    <span style={{ whiteSpace: "pre-line" }}>{A}</span>
-                                  </div>
-                                )}
-                                {C && (
-                                  <div>
-                                    <Tag color="blue">C</Tag>
-                                    <span style={{ whiteSpace: "pre-line" }}>{C}</span>
-                                  </div>
-                                )}
-                                {I && (
-                                  <div>
-                                    <Tag color="gold">I</Tag>
-                                    <span style={{ whiteSpace: "pre-line" }}>{I}</span>
-                                  </div>
-                                )}
+                                {R && renderRaciBlock("R", R, "green")}
+                                {A && renderRaciBlock("A", A, "red")}
+                                {C && renderRaciBlock("C", C, "blue")}
+                                {I && renderRaciBlock("I", I, "gold")}
                               </div>
                             );
                           }

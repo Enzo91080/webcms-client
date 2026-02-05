@@ -58,6 +58,10 @@ export const antdConfig: ThemeConfig = {
   },
 
   components: {
+    Tabs: {
+      colorPrimary: BRAND.primary,
+    },
+    
     Layout: {
       bodyBg: BRAND.layout,
       headerBg: BRAND.container,
