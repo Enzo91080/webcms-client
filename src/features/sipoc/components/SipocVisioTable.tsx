@@ -528,25 +528,25 @@ export function SipocVisioTable(props: SipocVisioTableProps) {
                                 {R && (
                                   <div>
                                     <Tag color="green">R</Tag>
-                                    <span>{R}</span>
+                                    <span style={{ whiteSpace: "pre-line" }}>{R}</span>
                                   </div>
                                 )}
                                 {A && (
                                   <div>
                                     <Tag color="red">A</Tag>
-                                    <span>{A}</span>
+                                    <span style={{ whiteSpace: "pre-line" }}>{A}</span>
                                   </div>
                                 )}
                                 {C && (
                                   <div>
                                     <Tag color="blue">C</Tag>
-                                    <span>{C}</span>
+                                    <span style={{ whiteSpace: "pre-line" }}>{C}</span>
                                   </div>
                                 )}
                                 {I && (
                                   <div>
                                     <Tag color="gold">I</Tag>
-                                    <span>{I}</span>
+                                    <span style={{ whiteSpace: "pre-line" }}>{I}</span>
                                   </div>
                                 )}
                               </div>
@@ -555,7 +555,7 @@ export function SipocVisioTable(props: SipocVisioTableProps) {
 
                           // fallback ancien champ
                           return r?.ressources ? (
-                            <Typography.Text>{r.ressources}</Typography.Text>
+                            <Typography.Text style={{ whiteSpace: "pre-line" }}>{r.ressources}</Typography.Text>
                           ) : (
                             <Typography.Text type="secondary">—</Typography.Text>
                           );

@@ -26,8 +26,8 @@ import { SipocVisioTable } from "../../sipoc/components/SipocVisioTable";
 import { ProcessHeroCard, ProcessLegend } from "../components";
 
 import { getCartography, getPath, getProcessByCode } from "../../../shared/api";
-import type { ProcessFull, ProcessLite, PathItem } from "../../../shared/types";
-import { getErrorMessage, normalizeDocs, normalizeStakeholders, normalizeObjectives } from "../../../shared/utils";
+import type { ProcessFull, ProcessLite, PathItem, ProcessStakeholder } from "../../../shared/types";
+import { getErrorMessage, normalizeDocs, normalizeObjectives } from "../../../shared/utils";
 
 function processBadgeFromCode(code: string) {
   return `PR-${code}-01`;
@@ -115,7 +115,10 @@ export default function ProcessPage() {
 
   const canNav = siblings.length >= 2;
 
-  const stakeholders = normalizeStakeholders(process?.stakeholders);
+  // Normalise les stakeholders en s'assurant qu'on a des ProcessStakeholder[]
+  const stakeholders: ProcessStakeholder[] = Array.isArray(process?.stakeholders)
+    ? process.stakeholders.filter((s): s is ProcessStakeholder => !!s && typeof s === "object" && "id" in s)
+    : [];
 
 
   const docs = normalizeDocs(process?.referenceDocuments);

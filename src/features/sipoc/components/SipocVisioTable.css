@@ -37,7 +37,7 @@
 
 .sipoc-raci-read > div {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 6px;
   white-space: normal;
 }

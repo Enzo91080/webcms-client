@@ -1,6 +1,5 @@
 import {
   CalendarOutlined,
-  DownloadOutlined,
   FilePdfOutlined,
   FileTextOutlined,
   InfoCircleOutlined,
@@ -16,20 +15,23 @@ import {
   Col,
   Divider,
   List,
+  Modal,
   Popover,
   Row,
   Space,
+  Table,
   Tag,
   Typography,
 } from "antd";
-import type { ObjectiveBlock, ProcessFull } from "../../../shared/types";
+import { useState } from "react";
+import type { ObjectiveBlock, ProcessFull, ProcessStakeholder } from "../../../shared/types";
 import type { NormalizedDoc } from "../../../shared/utils";
 import { ObjectivesBlocksRenderer } from "./ObjectivesBlocksRenderer";
 import antdConfig from "../../../antConfig";
 
 type Props = {
   process: ProcessFull;
-  stakeholders: string[];
+  stakeholders: ProcessStakeholder[];
   docs: NormalizedDoc[];
   objectivesBlocks: ObjectiveBlock[] | null;
   objectives: string[];
@@ -53,6 +55,37 @@ export function ProcessHeroCard({
   applicationDate = "22/12/2025",
 }: Props) {
   const headerBg = "linear-gradient(135deg,#0069c8 0%,#0069c8 50%,rgb(2, 80, 152) 100%)";
+
+  // State for stakeholder detail modal
+  const [selectedStakeholder, setSelectedStakeholder] = useState<ProcessStakeholder | null>(null);
+
+  // Table columns for stakeholder modal
+  const stakeholderColumns = [
+    {
+      title: "Besoins",
+      dataIndex: ["link", "needs"],
+      key: "needs",
+      render: (v: string | null | undefined) => v || "—",
+    },
+    {
+      title: "Attentes",
+      dataIndex: ["link", "expectations"],
+      key: "expectations",
+      render: (v: string | null | undefined) => v || "—",
+    },
+    {
+      title: "Critères d'évaluation",
+      dataIndex: ["link", "evaluationCriteria"],
+      key: "evaluationCriteria",
+      render: (v: string | null | undefined) => v || "—",
+    },
+    {
+      title: "Exigences",
+      dataIndex: ["link", "requirements"],
+      key: "requirements",
+      render: (v: string | null | undefined) => v || "—",
+    },
+  ];
 
   return (
     <Card
@@ -239,7 +272,8 @@ export function ProcessHeroCard({
                 {stakeholders.length > 0 ? (
                   stakeholders.map((s) => (
                     <Tag
-                      key={s}
+                      key={s.id}
+                      onClick={() => setSelectedStakeholder(s)}
                       style={{
                         background: "transparent",
                         border: "1px solid rgba(0,123,196,0.25)",
@@ -248,9 +282,12 @@ export function ProcessHeroCard({
                         padding: "4px 10px",
                         fontWeight: 600,
                         margin: 0,
+                        cursor: "pointer",
+                        transition: "all 0.2s",
                       }}
+                      className="stakeholder-tag-clickable"
                     >
-                      {s}
+                      {s.name}
                     </Tag>
                   ))
                 ) : (
@@ -259,6 +296,33 @@ export function ProcessHeroCard({
                   </Typography.Text>
                 )}
               </Space>
+
+              {/* Stakeholder Detail Modal */}
+              <Modal
+                open={!!selectedStakeholder}
+                onCancel={() => setSelectedStakeholder(null)}
+                title={
+                  <Space>
+                    <TeamOutlined style={{ color: antdConfig.token!.colorPrimary }} />
+                    <span>Partie intéressée : {selectedStakeholder?.name}</span>
+                  </Space>
+                }
+                footer={
+                  <Button type="primary" onClick={() => setSelectedStakeholder(null)}>
+                    Fermer
+                  </Button>
+                }
+                width={900}
+              >
+                <Table
+                  dataSource={selectedStakeholder ? [selectedStakeholder] : []}
+                  columns={stakeholderColumns}
+                  pagination={false}
+                  rowKey="id"
+                  size="middle"
+                  scroll={{ x: true }}
+                />
+              </Modal>
             </Space>
           </Col>
 
