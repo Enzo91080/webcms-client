@@ -78,7 +78,6 @@ export default function ProcessPreview({ data }: { data: ProcessPreviewData | nu
 
   const stakeholders = normalizeStakeholders(data.stakeholders);
   const docs = normalizeDocs(data.referenceDocuments);
-
   return (
     <div 
       style={{ 

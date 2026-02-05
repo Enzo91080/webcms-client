@@ -58,7 +58,12 @@ export type ProcessFull = ProcessLite & {
   pilots?: PilotRef[];
   referenceDocuments?: any;
   sipoc?: { rows: SipocRow[]; phases?: any[] };
-  logigramme?: { entryNodeId?: string; nodes: LogiNode[]; edges: LogiEdge[]; legend?: any[] };
+  logigramme?: { 
+    entryNodeId?: string; 
+    nodes: LogiNode[]; 
+    edges: LogiEdge[]; 
+    legend?: any[] 
+  };
   children?: ProcessLite[];
 };
 

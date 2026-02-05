@@ -9,14 +9,14 @@ import ProcessPage from "./features/processes/pages/ProcessPage";
 import AdminStakeholdersPage from "./features/stakeholders/pages/AdminListStakeholderPage";
 import AdminPilotsPage from "./features/pilots/pages/AdminListPilotPage";
 import AdminSipocPage from "./features/sipoc/pages/AdminSipocPage";
+import antdConfig from "./antConfig";
 
 // Ant Design default font (text): Open Sans
-const antdFontFamily =
-  '"Open Sans", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif';
+
 
 export default function App() {
   return (
-    <ConfigProvider theme={{ token: { fontFamily: antdFontFamily } }}>
+    <ConfigProvider theme={antdConfig}>
       <Routes>
         <Route path="/" element={<CartographyPage />} />
         <Route path="/process/:code" element={<ProcessPage />} />

@@ -26,10 +26,17 @@ export function normalizeDocs(input: unknown): NormalizedDoc[] {
  * Normalise une liste de stakeholders depuis n'importe quelle source.
  */
 export function normalizeStakeholders(input: unknown): string[] {
-  if (Array.isArray(input) && input.every((x) => typeof x === "string")) {
-    return input;
-  }
-  return [];
+  if (!Array.isArray(input)) return [];
+
+  return input
+    .map((x: any) => {
+      if (typeof x === "string") return x.trim();
+      // cas objet renvoyé par l’API
+      if (x && typeof x === "object") return String(x.name ?? x.label ?? x.title ?? "").trim();
+      // cas null/number/etc
+      return String(x ?? "").trim();
+    })
+    .filter(Boolean);
 }
 
 /**

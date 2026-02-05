@@ -1,13 +1,11 @@
 import {
   Button,
   Col,
-  Collapse,
   Drawer,
   Form,
   Input,
   InputNumber,
   Popconfirm,
-  Popover,
   Row,
   Select,
   Space,
@@ -20,25 +18,28 @@ import {
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { PlusOutlined, ReloadOutlined } from "@ant-design/icons";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 import { LogigrammeEditor } from "../../logigramme/components";
-import ProcessPreview from "../components/ProcessPreview";
 import SipocEditor from "../../sipoc/components/SipocEditor";
-import ObjectivesBlocksEditor from "../components/ObjectivesBlocksEditor";
+import {
+  ProcessPreview,
+  ObjectivesBlocksEditor,
+  PilotsCell,
+  getPilotName,
+  StakeholderLinksEditor,
+  ReferenceDocumentsEditor,
+  type StakeholderLinkData,
+} from "../components";
+import { buildProcessTree } from "../utils/tree";
 
 import {
   adminCreateProcess,
   adminDeleteProcess,
   adminGetProcess,
-  adminListPilots,
-  adminListProcesses,
-  adminListStakeholders,
   adminPatchProcess,
   adminSetProcessPilots,
   adminSetProcessStakeholders,
-  type Pilot,
-  type Stakeholder,
   type ProcessStakeholderItem,
 } from "../../../shared/api";
 
@@ -48,219 +49,16 @@ import {
   StakeholderLinkFields,
   ProcessStakeholder,
 } from "../../../shared/types";
-import { getErrorMessage } from "../../../shared/utils/error";
-import { normalizeDocs } from "../../../shared/utils/normalize";
-
-// ============================================================================
-// Helpers - Objectives (legacy string -> blocks)
-// ============================================================================
-
-/**
- * Parse un string objectives (ancien format) en ObjectiveBlock[].
- * Détecte automatiquement :
- * - Lignes numérotées (1., 2., etc.) → bloc "numbered" (si pas de sous-éléments)
- * - Lignes numérotées suivies de sous-éléments → bloc "text" + bloc "bullets"
- * - Lignes simples → bloc "text"
- */
-function parseObjectivesToBlocks(input: string): ObjectiveBlock[] {
-  if (!input || typeof input !== "string") return [];
-
-  const lines = input.split(/\r?\n/);
-  const blocks: ObjectiveBlock[] = [];
-
-  let i = 0;
-  while (i < lines.length) {
-    const trimmed = lines[i].trim();
-    if (!trimmed) {
-      i++;
-      continue;
-    }
-
-    const numberedMatch = trimmed.match(/^(\d+)\.\s*(.*)/);
-    if (numberedMatch) {
-      const mainText = numberedMatch[2].trim();
-
-      // Collecte sous-éléments éventuels (lignes non-numérotées suivantes)
-      const subItems: string[] = [];
-      let j = i + 1;
-      while (j < lines.length) {
-        const nextTrimmed = lines[j].trim();
-        if (!nextTrimmed) break;
-        if (/^\d+\.\s*/.test(nextTrimmed)) break;
-
-        const cleaned = nextTrimmed.replace(/^[-•]\s*/, "").trim();
-        if (cleaned) subItems.push(cleaned);
-        j++;
-      }
-
-      if (subItems.length > 0) {
-        if (mainText) blocks.push({ type: "text", text: mainText });
-        blocks.push({ type: "bullets", items: subItems });
-        i = j;
-        continue;
-      }
-
-      // Sinon, on essaie de regrouper des lignes numérotées consécutives en un seul bloc "numbered"
-      const numberedItems: string[] = [];
-      if (mainText) numberedItems.push(mainText);
-
-      let k = j;
-      while (k < lines.length) {
-        const nextTrimmed = lines[k].trim();
-        if (!nextTrimmed) {
-          k++;
-          continue;
-        }
-
-        const nextNumbered = nextTrimmed.match(/^(\d+)\.\s*(.*)/);
-        if (!nextNumbered) break;
-
-        // Si cette ligne numérotée possède des sous-éléments, stop : on garde le regroupement actuel
-        let hasSubItems = false;
-        let m = k + 1;
-        while (m < lines.length) {
-          const check = lines[m].trim();
-          if (!check) break;
-          if (/^\d+\.\s*/.test(check)) break;
-          hasSubItems = true;
-          break;
-        }
-        if (hasSubItems) break;
-
-        const itemText = nextNumbered[2].trim();
-        if (itemText) numberedItems.push(itemText);
-        k++;
-      }
-
-      if (numberedItems.length > 0) blocks.push({ type: "numbered", items: numberedItems });
-      i = k;
-      continue;
-    }
-
-    // Ligne simple → text
-    const cleanedLine = trimmed.replace(/^[-•]\s*/, "").trim();
-    if (cleanedLine) blocks.push({ type: "text", text: cleanedLine });
-    i++;
-  }
-
-  return blocks;
-}
-
-// ============================================================================
-// Helpers - Tree building for the table
-// ============================================================================
-
-/**
- * Construit un arbre à partir d’une liste plate de processus.
- * - Injecte "children" par parentProcessId
- * - Trie par orderInParent puis code
- * - Supprime "children" vides (pour éviter une UI bruitée)
- */
-function buildTree(items: ProcessFull[]) {
-  const nodes = items.map((p) => ({ ...p, children: [] as ProcessFull[] }));
-  const byId = new Map<string, ProcessFull>();
-  nodes.forEach((n) => byId.set(n.id, n));
-
-  const roots: ProcessFull[] = [];
-  for (const n of nodes) {
-    const parent = n.parentProcessId ? byId.get(n.parentProcessId) : null;
-    if (parent) parent.children!.push(n);
-    else roots.push(n);
-  }
-
-  const sortRec = (arr: ProcessFull[]) => {
-    arr.sort((a, b) => {
-      const oa = a.orderInParent ?? 9999;
-      const ob = b.orderInParent ?? 9999;
-      if (oa !== ob) return oa - ob;
-      return String(a.code).localeCompare(String(b.code));
-    });
-    arr.forEach((x) => x.children?.length && sortRec(x.children));
-  };
-
-  const pruneEmptyChildren = (n: ProcessFull) => {
-    if (!n.children || n.children.length === 0) {
-      delete (n as any).children;
-      return;
-    }
-    n.children.forEach(pruneEmptyChildren);
-  };
-
-  sortRec(roots);
-  roots.forEach(pruneEmptyChildren);
-
-  return roots;
-}
-
-// ============================================================================
-// Helpers - Pilots UI (robuste et sans "tirets")
-// ============================================================================
-
-/**
- * Retourne un nom de pilote exploitable, même si l’API renvoie des formats variés.
- * Supporte:
- * - { id, name }
- * - string (nom)
- */
-function getPilotName(p: any): string | null {
-  if (!p) return null;
-  if (typeof p === "string") return p.trim() || null;
-  if (typeof p?.name === "string") return p.name.trim() || null;
-  return null;
-}
-
-/**
- * Rendu compact des pilotes:
- * - 0 pilote -> Tag "Aucun"
- * - 1 pilote -> Tag
- * - N pilotes -> 1er Tag + Popover (+N)
- */
-function PilotsCell({ pilots }: { pilots: any[] | undefined }) {
-  const names = (Array.isArray(pilots) ? pilots : [])
-    .map(getPilotName)
-    .filter((x): x is string => Boolean(x));
-
-  if (names.length === 0) return <Tag style={{ opacity: 0.7 }}>Aucun</Tag>;
-
-  if (names.length === 1) {
-    return <Tag color="green">{names[0]}</Tag>;
-  }
-
-  return (
-    <Popover
-      content={
-        <Space direction="vertical">
-          {names.slice(1).map((name) => (
-            <Tag key={name} color="green">
-              {name}
-            </Tag>
-          ))}
-        </Space>
-      }
-    >
-      <Tag color="green" style={{ cursor: "pointer" }}>
-        {names[0]}
-        <span style={{ marginLeft: 6, fontSize: 12, opacity: 0.85 }}>
-          +{names.length - 1}
-        </span>
-      </Tag>
-    </Popover>
-  );
-}
-
-// ============================================================================
-// Types - Stakeholder link editing in UI
-// ============================================================================
-
-/**
- * Données UI pour la section "Détails par partie intéressée".
- * On garde l'identité (stakeholderId, name, isActive) + les champs enrichis.
- */
-type StakeholderLinkData = {
-  stakeholderId: string;
-  name: string;
-  isActive: boolean;
-} & StakeholderLinkFields;
+import {
+  useAdminProcesses,
+  usePilotOptions,
+  useStakeholderOptions,
+} from "../../../shared/hooks";
+import {
+  getErrorMessage,
+  normalizeDocs,
+  parseObjectivesToBlocks,
+} from "../../../shared/utils";
 
 // ============================================================================
 // Component
@@ -268,61 +66,23 @@ type StakeholderLinkData = {
 
 export default function AdminProcessesPage() {
   // ----------------------------
-  // State
+  // Data hooks
   // ----------------------------
-  const [items, setItems] = useState<ProcessFull[]>([]);
-  const [loading, setLoading] = useState(false);
+  const { items, loading, reload } = useAdminProcesses();
+  const { options: pilotOptions } = usePilotOptions();
+  const { stakeholders, options: stakeholderOptions, byId: stakeholdersById } = useStakeholderOptions();
 
-  const [stakeholders, setStakeholders] = useState<Stakeholder[]>([]);
-  const [pilots, setPilots] = useState<Pilot[]>([]);
-
+  // ----------------------------
+  // UI State
+  // ----------------------------
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<ProcessFull | null>(null);
   const [activeTab, setActiveTab] = useState<string>("general");
 
   const [stakeholderLinks, setStakeholderLinks] = useState<StakeholderLinkData[]>([]);
-  const [q, setQ] = useState(""); // recherche
+  const [q, setQ] = useState("");
 
   const [form] = Form.useForm();
-
-  // ----------------------------
-  // Data loading
-  // ----------------------------
-  const reload = useCallback(async () => {
-    try {
-      setLoading(true);
-      const res = await adminListProcesses();
-      setItems((res.data || []) as ProcessFull[]);
-    } catch (e) {
-      message.error(getErrorMessage(e));
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const loadStakeholders = useCallback(async () => {
-    try {
-      const res = await adminListStakeholders();
-      setStakeholders((res.data || []).filter((s) => s.isActive));
-    } catch (e) {
-      console.warn("Failed to load stakeholders", e);
-    }
-  }, []);
-
-  const loadPilots = useCallback(async () => {
-    try {
-      const res = await adminListPilots();
-      setPilots((res.data || []).filter((p) => p.isActive));
-    } catch (e) {
-      console.warn("Failed to load pilots", e);
-    }
-  }, []);
-
-  useEffect(() => {
-    reload();
-    loadStakeholders();
-    loadPilots();
-  }, [reload, loadStakeholders, loadPilots]);
 
   // ----------------------------
   // Derived data
@@ -335,23 +95,6 @@ export default function AdminProcessesPage() {
     ];
   }, [items]);
 
-  const stakeholderOptions = useMemo(
-    () => stakeholders.map((s) => ({ value: s.id, label: s.name })),
-    [stakeholders]
-  );
-
-  const pilotOptions = useMemo(
-    () => pilots.map((p) => ({ value: p.id, label: p.name })),
-    [pilots]
-  );
-
-  const stakeholdersById = useMemo(() => new Map(stakeholders.map((s) => [s.id, s])), [stakeholders]);
-
-  /**
-   * Filtrage simple et rapide:
-   * - code / name
-   * - pilotes (si présents dans l’objet process reçu par l’API)
-   */
   const filteredItems = useMemo(() => {
     const query = q.trim().toLowerCase();
     if (!query) return items;
@@ -370,7 +113,7 @@ export default function AdminProcessesPage() {
     });
   }, [items, q]);
 
-  const treeData = useMemo(() => buildTree(filteredItems), [filteredItems]);
+  const treeData = useMemo(() => buildProcessTree(filteredItems), [filteredItems]);
 
   // ----------------------------
   // Stakeholders selection + editing
@@ -420,17 +163,13 @@ export default function AdminProcessesPage() {
   // ----------------------------
   // Form mapping (ProcessFull <-> Form)
   // ----------------------------
-
-  /**
-   * Construit les valeurs du formulaire + les stakeholderLinks depuis un ProcessFull.
-   * Centralise toute la logique pour éviter les répétitions dans openEdit().
-   */
   function deriveFormFromProcess(proc: ProcessFull) {
-    const objectivesBlocks: ObjectiveBlock[] = Array.isArray(proc.objectivesBlocks) && proc.objectivesBlocks.length > 0
-      ? proc.objectivesBlocks
-      : typeof (proc as any).objectives === "string"
-        ? parseObjectivesToBlocks((proc as any).objectives)
-        : [];
+    const objectivesBlocks: ObjectiveBlock[] =
+      Array.isArray(proc.objectivesBlocks) && proc.objectivesBlocks.length > 0
+        ? proc.objectivesBlocks
+        : typeof (proc as any).objectives === "string"
+          ? parseObjectivesToBlocks((proc as any).objectives)
+          : [];
 
     const pilotIds: string[] = Array.isArray((proc as any).pilotIds)
       ? (proc as any).pilotIds
@@ -503,7 +242,6 @@ export default function AdminProcessesPage() {
   }
 
   async function openEdit(p: ProcessFull) {
-    // 1) UI immédiate avec l’objet lite
     setEditing(p);
     setActiveTab("general");
     setOpen(true);
@@ -514,7 +252,6 @@ export default function AdminProcessesPage() {
     form.resetFields();
     form.setFieldsValue(lite.formValues);
 
-    // 2) Re-fetch full (sipoc/logigramme/etc.)
     try {
       const full = await adminGetProcess(p.id);
       const proc = full.data as ProcessFull;
@@ -587,7 +324,6 @@ export default function AdminProcessesPage() {
       message.success("Processus enregistré");
       await reload();
 
-      // Refresh editing with full doc (preview/sipoc/logigramme cohérents)
       try {
         const full = await adminGetProcess(editing.id);
         setEditing(full.data as ProcessFull);
@@ -665,13 +401,7 @@ export default function AdminProcessesPage() {
   // ----------------------------
   return (
     <div style={{ padding: 16 }}>
-      {/* Header */}
-      <Row
-        gutter={[16, 16]}
-        align="middle"
-        justify="space-between"
-        style={{ marginBottom: 12 }}
-      >
+      <Row gutter={[16, 16]} align="middle" justify="space-between" style={{ marginBottom: 12 }}>
         <Col flex="auto">
           <Typography.Title level={4} style={{ margin: 0 }}>
             Processus
@@ -683,7 +413,6 @@ export default function AdminProcessesPage() {
 
         <Col flex="none">
           <Space wrap>
-            {/* Recherche à gauche du bouton Nouvelle */}
             <Input
               allowClear
               value={q}
@@ -703,7 +432,6 @@ export default function AdminProcessesPage() {
         </Col>
       </Row>
 
-      {/* Table */}
       <Table
         rowKey="id"
         columns={columns}
@@ -717,7 +445,6 @@ export default function AdminProcessesPage() {
         }}
       />
 
-      {/* Drawer */}
       <Drawer
         open={open}
         onClose={() => setOpen(false)}
@@ -734,7 +461,6 @@ export default function AdminProcessesPage() {
               label: "Général",
               children: (
                 <Form form={form} layout="vertical">
-                  {/* Identité du processus */}
                   <div
                     style={{
                       display: "grid",
@@ -772,7 +498,6 @@ export default function AdminProcessesPage() {
                     </Form.Item>
                   </div>
 
-                  {/* Description / Objectifs */}
                   <Form.Item name="title" label="Objet du processus">
                     <Input.TextArea rows={3} />
                   </Form.Item>
@@ -781,7 +506,6 @@ export default function AdminProcessesPage() {
                     <ObjectivesBlocksEditor />
                   </Form.Item>
 
-                  {/* Pilotes */}
                   <Form.Item name="pilotIds" label="Pilote(s)">
                     <Select
                       mode="multiple"
@@ -793,7 +517,6 @@ export default function AdminProcessesPage() {
                     />
                   </Form.Item>
 
-                  {/* Parties intéressées */}
                   <Form.Item name="selectedStakeholderIds" label="Parties intéressées">
                     <Select
                       mode="multiple"
@@ -806,195 +529,9 @@ export default function AdminProcessesPage() {
                     />
                   </Form.Item>
 
-                  {/* Détails par stakeholder */}
-                  {stakeholderLinks.length > 0 && (
-                    <div style={{ marginBottom: 24 }}>
-                      <Typography.Text strong style={{ display: "block", marginBottom: 8 }}>
-                        Détails par partie intéressée
-                      </Typography.Text>
+                  <StakeholderLinksEditor links={stakeholderLinks} onUpdateField={updateLinkField} />
 
-                      <Collapse
-                        accordion
-                        items={stakeholderLinks.map((link) => ({
-                          key: link.stakeholderId,
-                          label: (
-                            <span>
-                              {link.name}
-                              {!link.isActive && (
-                                <Tag color="default" style={{ marginLeft: 8 }}>
-                                  Inactif
-                                </Tag>
-                              )}
-                            </span>
-                          ),
-                          children: (
-                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                              <div>
-                                <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-                                  Besoins
-                                </Typography.Text>
-                                <Input.TextArea
-                                  rows={2}
-                                  value={link.needs ?? ""}
-                                  onChange={(e) => updateLinkField(link.stakeholderId, "needs", e.target.value)}
-                                  placeholder="Besoins de cette partie intéressée..."
-                                />
-                              </div>
-
-                              <div>
-                                <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-                                  Attentes
-                                </Typography.Text>
-                                <Input.TextArea
-                                  rows={2}
-                                  value={link.expectations ?? ""}
-                                  onChange={(e) =>
-                                    updateLinkField(link.stakeholderId, "expectations", e.target.value)
-                                  }
-                                  placeholder="Attentes..."
-                                />
-                              </div>
-
-                              <div>
-                                <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-                                  Éléments d'évaluation
-                                </Typography.Text>
-                                <Input.TextArea
-                                  rows={2}
-                                  value={link.evaluationCriteria ?? ""}
-                                  onChange={(e) =>
-                                    updateLinkField(link.stakeholderId, "evaluationCriteria", e.target.value)
-                                  }
-                                  placeholder="Critères d'évaluation..."
-                                />
-                              </div>
-
-                              <div>
-                                <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-                                  Exigences
-                                </Typography.Text>
-                                <Input.TextArea
-                                  rows={2}
-                                  value={link.requirements ?? ""}
-                                  onChange={(e) =>
-                                    updateLinkField(link.stakeholderId, "requirements", e.target.value)
-                                  }
-                                  placeholder="Exigences..."
-                                />
-                              </div>
-
-                              <div>
-                                <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-                                  Forces
-                                </Typography.Text>
-                                <Input.TextArea
-                                  rows={2}
-                                  value={link.strengths ?? ""}
-                                  onChange={(e) => updateLinkField(link.stakeholderId, "strengths", e.target.value)}
-                                  placeholder="Forces..."
-                                />
-                              </div>
-
-                              <div>
-                                <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-                                  Faiblesses
-                                </Typography.Text>
-                                <Input.TextArea
-                                  rows={2}
-                                  value={link.weaknesses ?? ""}
-                                  onChange={(e) =>
-                                    updateLinkField(link.stakeholderId, "weaknesses", e.target.value)
-                                  }
-                                  placeholder="Faiblesses..."
-                                />
-                              </div>
-
-                              <div>
-                                <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-                                  Opportunités
-                                </Typography.Text>
-                                <Input.TextArea
-                                  rows={2}
-                                  value={link.opportunities ?? ""}
-                                  onChange={(e) =>
-                                    updateLinkField(link.stakeholderId, "opportunities", e.target.value)
-                                  }
-                                  placeholder="Opportunités..."
-                                />
-                              </div>
-
-                              <div>
-                                <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-                                  Risques
-                                </Typography.Text>
-                                <Input.TextArea
-                                  rows={2}
-                                  value={link.risks ?? ""}
-                                  onChange={(e) => updateLinkField(link.stakeholderId, "risks", e.target.value)}
-                                  placeholder="Risques..."
-                                />
-                              </div>
-
-                              <div style={{ gridColumn: "1 / -1" }}>
-                                <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-                                  Plan d'actions
-                                </Typography.Text>
-                                <Input.TextArea
-                                  rows={3}
-                                  value={link.actionPlan ?? ""}
-                                  onChange={(e) =>
-                                    updateLinkField(link.stakeholderId, "actionPlan", e.target.value)
-                                  }
-                                  placeholder="Plan d'actions..."
-                                />
-                              </div>
-                            </div>
-                          ),
-                        }))}
-                      />
-                    </div>
-                  )}
-
-                  {/* Documents de référence */}
-                  <Form.List name="referenceDocuments">
-                    {(fields, { add, remove }) => (
-                      <div>
-                        <Space style={{ marginBottom: 12 }}>
-                          <Button onClick={() => add({ code: "", title: "", type: "PDF", url: "" })}>
-                            + Ajouter un document
-                          </Button>
-                        </Space>
-
-                        {fields.map((f) => (
-                          <div
-                            key={f.key}
-                            style={{
-                              display: "grid",
-                              gridTemplateColumns: "140px 1fr 120px 1fr 90px",
-                              gap: 8,
-                              marginBottom: 8,
-                            }}
-                          >
-                            <Form.Item name={[f.name, "code"]} style={{ marginBottom: 0 }}>
-                              <Input placeholder="DOC-XXX-001" />
-                            </Form.Item>
-                            <Form.Item name={[f.name, "title"]} style={{ marginBottom: 0 }}>
-                              <Input placeholder="Titre document" />
-                            </Form.Item>
-                            <Form.Item name={[f.name, "type"]} style={{ marginBottom: 0 }}>
-                              <Input placeholder="PDF" />
-                            </Form.Item>
-                            <Form.Item name={[f.name, "url"]} style={{ marginBottom: 0 }}>
-                              <Input placeholder="https://... ou /process/..." />
-                            </Form.Item>
-                            <Button danger onClick={() => remove(f.name)}>
-                              Suppr.
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </Form.List>
+                  <ReferenceDocumentsEditor />
 
                   <Space style={{ marginTop: 24 }}>
                     <Button type="primary" onClick={saveBase}>
@@ -1042,7 +579,7 @@ export default function AdminProcessesPage() {
                   }}
                 />
               ) : (
-                <div style={{ opacity: 0.7 }}>Crée d’abord le processus puis édite le logigramme.</div>
+                <div style={{ opacity: 0.7 }}>Crée d'abord le processus puis édite le logigramme.</div>
               ),
             },
             {
@@ -1051,7 +588,7 @@ export default function AdminProcessesPage() {
               children: editing?.id ? (
                 <ProcessPreview data={editing as any} />
               ) : (
-                <div style={{ opacity: 0.7 }}>Crée d’abord le processus pour voir l’aperçu.</div>
+                <div style={{ opacity: 0.7 }}>Crée d'abord le processus pour voir l'aperçu.</div>
               ),
             },
           ]}

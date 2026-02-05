@@ -6,3 +6,4 @@ export {
   normalizeObjectives,
   type NormalizedDoc,
 } from "./normalize";
+export { parseObjectivesToBlocks } from "./objectives";

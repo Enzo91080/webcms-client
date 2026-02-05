@@ -1,86 +1,36 @@
 import {
   ArrowLeftOutlined,
   ArrowRightOutlined,
-  CalendarOutlined,
   FileSearchOutlined,
-  FileTextOutlined,
   InfoCircleOutlined,
-  TagOutlined,
-  TeamOutlined,
-  UserOutlined
 } from "@ant-design/icons";
 import {
   Alert,
   Avatar,
-  Badge,
   Button,
   Card,
   Col,
   Divider,
-  List,
   Modal,
-  Popover,
   Row,
   Space,
   Spin,
   Tag,
-  Typography
+  Typography,
 } from "antd";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+
 import LogigrammeViewer from "../../logigramme/components/LogigrammeViewer";
 import { SipocVisioTable } from "../../sipoc/components/SipocVisioTable";
-import { getCartography, getPath, getProcessByCode } from "../../../shared/api";
-import type { ProcessFull, ProcessLite, PathItem, ObjectiveBlock } from "../../../shared/types";
-import { getErrorMessage } from "../../../shared/utils/error";
-import { normalizeDocs, normalizeStakeholders, normalizeObjectives, type NormalizedDoc } from "../../../shared/utils/normalize";
+import { ProcessHeroCard, ProcessLegend } from "../components";
 
-type ReferenceDoc = NormalizedDoc;
+import { getCartography, getPath, getProcessByCode } from "../../../shared/api";
+import type { ProcessFull, ProcessLite, PathItem } from "../../../shared/types";
+import { getErrorMessage, normalizeDocs, normalizeStakeholders, normalizeObjectives } from "../../../shared/utils";
 
 function processBadgeFromCode(code: string) {
   return `PR-${code}-01`;
-}
-
-// Rendu des objectivesBlocks structurés
-function ObjectivesBlocksRenderer({ blocks }: { blocks: ObjectiveBlock[] }) {
-  return (
-    <>
-      {blocks.map((block, idx) => {
-        if (block.type === "text") {
-          return (
-            <Typography.Text
-              key={idx}
-              style={{ color: "rgba(255,255,255,0.9)", fontSize: 13, lineHeight: 1.6, display: "block", marginBottom: 8 }}
-            >
-              {block.text}
-            </Typography.Text>
-          );
-        }
-
-        const items = block.items.filter((it) => it.trim());
-        if (!items.length) return null;
-
-        return (
-          <List
-            key={idx}
-            size="small"
-            dataSource={items}
-            style={{ marginBottom: 8 }}
-            renderItem={(item, itemIdx) => (
-              <List.Item style={{ border: "none", padding: "4px 0" }}>
-                <Typography.Text style={{ color: "rgba(255,255,255,0.9)", fontSize: 13, lineHeight: 1.6 }}>
-                  <span style={{ fontWeight: 800, marginRight: 8, color: "rgba(255, 255, 255, 0.85)", minWidth: 20, display: "inline-block" }}>
-                    {block.type === "numbered" ? `${itemIdx + 1}.` : "•"}
-                  </span>
-                  {item}
-                </Typography.Text>
-              </List.Item>
-            )}
-          />
-        );
-      })}
-    </>
-  );
 }
 
 export default function ProcessPage() {
@@ -102,6 +52,7 @@ export default function ProcessPage() {
     setSipocFocusRef(null);
   }, []);
 
+  // Load process data
   useEffect(() => {
     if (!code) return;
 
@@ -155,6 +106,7 @@ export default function ProcessPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [code]);
 
+  // Derived data
   const breadcrumb = useMemo(() => {
     if (!process) return "";
     const rootName = path?.[0]?.name || process.name;
@@ -163,6 +115,17 @@ export default function ProcessPage() {
 
   const canNav = siblings.length >= 2;
 
+  const stakeholders = normalizeStakeholders(process?.stakeholders);
+
+
+  const docs = normalizeDocs(process?.referenceDocuments);
+  const objectivesBlocks =
+    Array.isArray(process?.objectivesBlocks) && process.objectivesBlocks.length > 0
+      ? process.objectivesBlocks
+      : null;
+  const objectives = objectivesBlocks ? [] : normalizeObjectives((process as any)?.objectives);
+
+  // Navigation between siblings
   const goDelta = useCallback(
     (delta: number) => {
       if (!process || !canNav || isTransitioning) return;
@@ -187,12 +150,7 @@ export default function ProcessPage() {
   const goNext = useCallback(() => goDelta(+1), [goDelta]);
   const goPrev = useCallback(() => goDelta(-1), [goDelta]);
 
-  // (gardé, même si non utilisé ici)
-  const handleProcessChange = useCallback((code: string) => {
-    navigate(`/process/${code}`);
-  }, [navigate]);
-
-  // Raccourcis clavier pour naviguer entre les processus
+  // Keyboard shortcuts
   useEffect(() => {
     if (!canNav) return;
 
@@ -210,19 +168,7 @@ export default function ProcessPage() {
     return () => window.removeEventListener("keydown", handleKeyPress);
   }, [canNav, goNext, goPrev]);
 
-  const statusLabel = "Validé";
-  const versionLabel = "3.0";
-  const applicationDate = "22/12/2025";
-
-  const stakeholders = normalizeStakeholders(process?.stakeholders);
-  const docs = normalizeDocs(process?.referenceDocuments);
-
-  // ✅ objectifs
-  const objectivesBlocks = Array.isArray(process?.objectivesBlocks) && process.objectivesBlocks.length > 0
-    ? process.objectivesBlocks
-    : null;
-  const objectives = objectivesBlocks ? [] : normalizeObjectives((process as any)?.objectives);
-
+  // Error state
   if (error) {
     return (
       <div style={{ minHeight: "100vh", background: "#f5f5f5", padding: "40px 20px" }}>
@@ -244,9 +190,18 @@ export default function ProcessPage() {
     );
   }
 
+  // Loading state
   if (!process) {
     return (
-      <div style={{ minHeight: "100vh", background: "#f5f5f5", display: "flex", justifyContent: "center", alignItems: "center" }}>
+      <div
+        style={{
+          minHeight: "100vh",
+          background: "#f5f5f5",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
         <Space direction="vertical" align="center" size="large">
           <Spin size="large" />
           <Typography.Text type="secondary">Chargement du processus...</Typography.Text>
@@ -262,7 +217,7 @@ export default function ProcessPage() {
         background: "#f5f5f5",
         padding: "24px",
         position: "relative",
-        overflow: "hidden"
+        overflow: "hidden",
       }}
     >
       <div
@@ -274,242 +229,31 @@ export default function ProcessPage() {
           transform: isTransitioning
             ? `translateX(${slideDirection === "right" ? "-100%" : "100%"})`
             : "translateX(0)",
-          opacity: isTransitioning ? 0 : 1
+          opacity: isTransitioning ? 0 : 1,
         }}
       >
+        {/* Back link + breadcrumb */}
         <Space style={{ width: "100%", justifyContent: "space-between", marginBottom: 16 }}>
-          <Button
-            type="text"
-            icon={<ArrowLeftOutlined />}
-            href="/"
-            style={{ padding: "4px 12px" }}
-          >
+          <Button type="text" icon={<ArrowLeftOutlined />} href="/" style={{ padding: "4px 12px" }}>
             Retour à la cartographie
           </Button>
-          <Typography.Text type="secondary" style={{ fontSize: 13 }}>{breadcrumb}</Typography.Text>
+          <Typography.Text type="secondary" style={{ fontSize: 13 }}>
+            {breadcrumb}
+          </Typography.Text>
         </Space>
 
-        <Card
-          bordered={false}
-          style={{
-            background: "linear-gradient(135deg,#0069c8 0%,#0069c8 50%,rgb(2, 80, 152) 100%)",
-            marginBottom: 24,
-            borderRadius: 12
-          }}
-          bodyStyle={{ padding: 32 }}
-        >
-          <Space direction="vertical" size="large" style={{ width: "100%" }}>
-            <Row gutter={24} align="middle" wrap>
-              <Col flex="auto">
-                <div>
-                  <Typography.Title level={2} style={{ margin: 0, color: "white", fontSize: 28, fontWeight: 800, fontFamily: "Akrobat", letterSpacing: 1.2, textTransform: "uppercase" }}>
-                    Processus {process.name}
-                  </Typography.Title>
-                  <Typography.Text style={{ color: "rgba(255,255,255,0.8)", fontSize: 14, marginTop: 8, display: "block" }}>
-                    {process.title || "Aucune description disponible"}
-                  </Typography.Text>
-                </div>
-              </Col>
-              <Col>
-                <Space size="large" wrap>
-                  <Space direction="vertical" size={4}>
-                    <Typography.Text style={{ fontSize: 12, color: "rgba(255,255,255,0.7)", display: "block" }}>
-                      Statut
-                    </Typography.Text>
-                    <Badge
-                      status="success"
-                      text={<span style={{ color: "white", fontWeight: 600, fontSize: 14 }}>{statusLabel}</span>}
-                    />
-                  </Space>
+        {/* Hero card */}
+        <ProcessHeroCard
+          process={process}
+          stakeholders={stakeholders}
+          docs={docs}
+          objectivesBlocks={objectivesBlocks}
+          objectives={objectives}
+        />
+        {/* divider */}
+        <Divider />
 
-                  <Divider type="vertical" style={{ borderColor: "rgba(255,255,255,0.2)", height: 40 }} />
-
-                  <Space direction="vertical" size={4}>
-                    <Typography.Text style={{ fontSize: 12, color: "rgba(255,255,255,0.7)", display: "block" }}>
-                      Version
-                    </Typography.Text>
-                    <Space>
-                      <TagOutlined style={{ color: "rgba(255,255,255,0.8)" }} />
-                      <span style={{ color: "white", fontWeight: 600, fontSize: 14 }}>{versionLabel}</span>
-                    </Space>
-                  </Space>
-
-                  <Divider type="vertical" style={{ borderColor: "rgba(255,255,255,0.2)", height: 40 }} />
-
-                  <Space direction="vertical" size={4}>
-                    <Typography.Text style={{ fontSize: 12, color: "rgba(255,255,255,0.7)", display: "block" }}>
-                      Date d'application
-                    </Typography.Text>
-                    <Space>
-                      <CalendarOutlined style={{ color: "rgba(255,255,255,0.8)" }} />
-                      <span style={{ color: "white", fontWeight: 600, fontSize: 14 }}>{applicationDate}</span>
-                    </Space>
-                  </Space>
-
-                  <Divider type="vertical" style={{ borderColor: "rgba(255,255,255,0.2)", height: 40 }} />
-
-                  <Space direction="vertical" size={4}>
-                    <Typography.Text style={{ fontSize: 12, color: "rgba(255,255,255,0.7)", display: "block" }}>
-                      Pilote
-                    </Typography.Text>
-                    <Space>
-                      <Avatar
-                        icon={<UserOutlined />}
-                        size="small"
-                        style={{ background: "rgba(255,255,255,0.15)", border: "1.5px solid rgba(255,255,255,0.25)" }}
-                      />
-                      {process.pilots && process.pilots.length > 0 ? (
-                        <Space size={6}>
-                          <span style={{ color: "white", fontWeight: 600, fontSize: 14 }}>
-                            {process.pilots[0].name}
-                          </span>
-                          {process.pilots.length > 1 && (
-                            <Popover
-                              content={
-                                <Space size={[6, 6]} wrap>
-                                  {process.pilots.slice(1).map((p) => (
-                                    <Tag key={p.id}>{p.name}</Tag>
-                                  ))}
-                                </Space>
-                              }
-                              trigger="hover"
-                            >
-                              <Tag
-                                style={{
-                                  background: "rgba(255,255,255,0.2)",
-                                  border: "none",
-                                  color: "white",
-                                  cursor: "pointer",
-                                  fontSize: 12,
-                                  fontWeight: 600,
-                                }}
-                              >
-                                +{process.pilots.length - 1}
-                              </Tag>
-                            </Popover>
-                          )}
-                        </Space>
-                      ) : (
-                        <span style={{ color: "rgba(255,255,255,0.6)", fontSize: 14 }}>—</span>
-                      )}
-                    </Space>
-                  </Space>
-                </Space>
-              </Col>
-            </Row>
-
-            <Divider style={{ borderColor: "rgba(255,255,255,0.15)", margin: "16px 0" }} />
-
-            <Row gutter={24}>
-              <Col xs={24} md={8}>
-                <Space direction="vertical" size={8} style={{ width: "100%" }}>
-                  <Space align="center">
-                    <InfoCircleOutlined style={{ color: "rgba(255,255,255,0.9)", fontSize: 16 }} />
-                    <Typography.Text style={{ color: "rgba(255,255,255,0.9)", fontWeight: 600, fontSize: 14 }}>
-                      Objectifs du processus
-                    </Typography.Text>
-                  </Space>
-                  {objectivesBlocks ? (
-                    <ObjectivesBlocksRenderer blocks={objectivesBlocks} />
-                  ) : (
-                    <List
-                      size="small"
-                      dataSource={objectives}
-                      renderItem={(item, idx) => (
-                        <List.Item style={{ border: "none", padding: "6px 0" }}>
-                          <Typography.Text style={{ color: "rgba(255,255,255,0.9)", fontSize: 13, lineHeight: 1.6 }}>
-                            <span style={{ fontWeight: 800, marginRight: 8, color: "rgba(255, 255, 255, 0.85)" }}>
-                              {idx + 1}.
-                            </span>
-                            {item}
-                          </Typography.Text>
-                        </List.Item>
-                      )}
-                    />
-                  )}
-                </Space>
-              </Col>
-
-              <Col xs={24} md={8}>
-                <Space direction="vertical" size={8} style={{ width: "100%" }}>
-                  <Space align="center">
-                    <TeamOutlined style={{ color: "rgba(255,255,255,0.9)", fontSize: 16 }} />
-                    <Typography.Text style={{ color: "rgba(255,255,255,0.9)", fontWeight: 600, fontSize: 14 }}>
-                      Parties intéressées
-                    </Typography.Text>
-                  </Space>
-                  <Space wrap>
-                    {stakeholders.length > 0 ? (
-                      stakeholders.map((s) => (
-                        <Tag
-                          key={s}
-                          style={{
-                            background: "rgba(255,255,255,0.15)",
-                            border: "1px solid rgba(255,255,255,0.25)",
-                            color: "white",
-                            fontSize: 12
-                          }}
-                        >
-                          {s}
-                        </Tag>
-                      ))
-                    ) : (
-                      <Typography.Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 12 }}>
-                        Aucune partie intéressée définie
-                      </Typography.Text>
-                    )}
-                  </Space>
-                </Space>
-              </Col>
-
-              <Col xs={24} md={8}>
-                <Space direction="vertical" size={8} style={{ width: "100%" }}>
-                  <Space align="center">
-                    <FileTextOutlined style={{ color: "rgba(255,255,255,0.9)", fontSize: 16 }} />
-                    <Typography.Text style={{ color: "rgba(255,255,255,0.9)", fontWeight: 600, fontSize: 14 }}>
-                      Documents de référence
-                    </Typography.Text>
-                  </Space>
-                  <Space direction="vertical" size={6} style={{ width: "100%" }}>
-                    {docs.length > 0 ? (
-                      docs.map((d, idx) => (
-                        <Space key={`${d.code}-${idx}`} style={{ width: "100%", justifyContent: "space-between" }}>
-                          <Space>
-                            <FileTextOutlined style={{ color: "rgba(255,255,255,0.8)", fontSize: 14 }} />
-                            <Space direction="vertical" size={0}>
-                              <Typography.Text style={{ color: "white", fontSize: 12, fontWeight: 600 }}>
-                                {d.code} — {d.title}
-                              </Typography.Text>
-                              <Typography.Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 11 }}>
-                                {d.type || "PDF"}
-                              </Typography.Text>
-                            </Space>
-                          </Space>
-                          {d.url && (
-                            <Button
-                              type="text"
-                              icon={<FileTextOutlined />}
-                              href={d.url}
-                              target="_blank"
-                              rel="noreferrer"
-                              size="small"
-                              style={{ color: "rgba(255,255,255,0.9)" }}
-                            />
-                          )}
-                        </Space>
-                      ))
-                    ) : (
-                      <Typography.Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 12 }}>
-                        Aucun document de référence
-                      </Typography.Text>
-                    )}
-                  </Space>
-                </Space>
-              </Col>
-            </Row>
-          </Space>
-        </Card>
-
+        {/* Logigramme section */}
         <div style={{ position: "relative" }}>
           {canNav && (
             <>
@@ -527,7 +271,7 @@ export default function ProcessPage() {
                   zIndex: 10,
                   width: 48,
                   height: 48,
-                  boxShadow: "0 4px 12px rgba(0,0,0,0.15)"
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
                 }}
               />
               <Button
@@ -544,16 +288,13 @@ export default function ProcessPage() {
                   zIndex: 10,
                   width: 48,
                   height: 48,
-                  boxShadow: "0 4px 12px rgba(0,0,0,0.15)"
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
                 }}
               />
             </>
           )}
 
-          <Card
-            style={{ borderRadius: 12 }}
-            bodyStyle={{ padding: 24 }}
-          >
+          <Card style={{ borderRadius: 12 }} bodyStyle={{ padding: 24 }}>
             <Space style={{ width: "100%", justifyContent: "space-between", marginBottom: 20 }}>
               <div>
                 <Space align="center" style={{ marginBottom: 8 }}>
@@ -571,12 +312,7 @@ export default function ProcessPage() {
                 </Typography.Text>
               </div>
               <Space>
-                <Button
-                  type="primary"
-                  icon={<FileSearchOutlined />}
-                  onClick={() => setSipocOpen(true)}
-                  size="middle"
-                >
+                <Button type="primary" icon={<FileSearchOutlined />} onClick={() => setSipocOpen(true)} size="middle">
                   Voir le tableau SIPOC
                 </Button>
                 <Tag color="blue" style={{ fontSize: 12, padding: "6px 14px", fontWeight: 600 }}>
@@ -586,9 +322,18 @@ export default function ProcessPage() {
             </Space>
 
             <Row gutter={24}>
-              {/* Logigramme à gauche */}
               <Col xs={24} lg={18}>
-                <div style={{ border: "1px solid #f0f0f0", borderRadius: 8, height: "calc(100vh - 420px)", minHeight: 500, maxHeight: 800, overflow: "hidden", background: "white" }}>
+                <div
+                  style={{
+                    border: "1px solid #f0f0f0",
+                    borderRadius: 8,
+                    height: "calc(100vh - 420px)",
+                    minHeight: 500,
+                    maxHeight: 800,
+                    overflow: "hidden",
+                    background: "white",
+                  }}
+                >
                   <LogigrammeViewer
                     logigramme={process.logigramme}
                     sipocRows={process.sipoc?.rows || []}
@@ -599,65 +344,14 @@ export default function ProcessPage() {
                   />
                 </div>
               </Col>
-
-              {/* Légende à droite */}
               <Col xs={24} lg={6}>
-                <Card
-                  size="small"
-                  style={{ borderRadius: 8, height: "calc(100vh - 420px)", minHeight: 500, maxHeight: 800 }}
-                  bodyStyle={{ padding: 16, height: "100%", overflow: "auto" }}
-                  title={
-                    <Typography.Text strong style={{ fontSize: 14 }}>
-                      Légende
-                    </Typography.Text>
-                  }
-                >
-                  <Space direction="vertical" size={12} style={{ width: "100%" }}>
-                    {Array.isArray((process.logigramme as any)?.legend) && (process.logigramme as any).legend.length ? (
-                      (process.logigramme as any).legend.map((it: any, idx: number) => {
-                        const color = it.color || "#0ea5e9";
-                        const bg = it.bg || "transparent";
-                        const key = (it.key || it.number || "").toString();
-                        return (
-                          <Space key={idx} size={10} style={{ width: "100%" }}>
-                            <Badge
-                              count={key}
-                              style={{
-                                backgroundColor: color,
-                                border: `2px solid ${color}`,
-                                minWidth: 36,
-                                height: 32,
-                                borderRadius: 8,
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                fontSize: 13,
-                                fontWeight: 700
-                              }}
-                            />
-                            <Typography.Text style={{ fontSize: 13, flex: 1 }}>{it.label || ""}</Typography.Text>
-                          </Space>
-                        );
-                      })
-                    ) : (
-                      <>
-                        <Space size={10} style={{ width: "100%" }}>
-                          <Badge count="1" style={{ backgroundColor: "#2563eb", minWidth: 36, height: 32, borderRadius: 8, fontSize: 13, fontWeight: 700 }} />
-                          <Typography.Text style={{ fontSize: 13, flex: 1 }}>Commercial</Typography.Text>
-                        </Space>
-                        <Space size={10} style={{ width: "100%" }}>
-                          <Badge count="2" style={{ backgroundColor: "#22c55e", minWidth: 36, height: 32, borderRadius: 8, fontSize: 13, fontWeight: 700 }} />
-                          <Typography.Text style={{ fontSize: 13, flex: 1 }}>ADV</Typography.Text>
-                        </Space>
-                      </>
-                    )}
-                  </Space>
-                </Card>
+                <ProcessLegend logigramme={process.logigramme} />
               </Col>
             </Row>
           </Card>
         </div>
 
+        {/* SIPOC Modal */}
         <Modal
           open={sipocOpen}
           onCancel={closeSipoc}
@@ -696,8 +390,7 @@ export default function ProcessPage() {
             />
           )}
         </Modal>
-
       </div>
-    </div >
+    </div>
   );
 }

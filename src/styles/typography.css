@@ -1,0 +1,29 @@
+:root {
+  --font-body: "Open Sans", -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-display: "Akrobat", "Open Sans", -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+/* base de l’app */
+body {
+  font-family: var(--font-body);
+}
+
+/* Titres Ant Design (Typography.Title rend des h1..h5) */
+h1, h2, h3, h4, h5,
+.ant-typography h1,
+.ant-typography h2,
+.ant-typography h3,
+.ant-typography h4,
+.ant-typography h5,
+.ant-typography-title {
+  font-family: var(--font-display);
+  letter-spacing: 0.6px; /* optionnel */
+}
+
+/* Optionnel : si tu veux aussi forcer certains éléments “titres” AntD */
+.ant-card-head-title,
+.ant-modal-title,
+.ant-page-header-heading-title {
+  font-family: var(--font-display);
+}
+    

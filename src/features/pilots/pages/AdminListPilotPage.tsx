@@ -1,107 +1,66 @@
 import {
   Button,
+  Col,
+  Divider,
   Drawer,
   Form,
   Input,
   Popconfirm,
+  Row,
   Select,
   Space,
   Switch,
   Table,
   Tag,
+  Tooltip,
   Typography,
   message,
-  Row,
-  Col,
-  Tooltip,
-  Divider,
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { DeleteOutlined, EditOutlined, PlusOutlined, ReloadOutlined } from "@ant-design/icons";
+
 import {
   adminCreatePilot,
   adminDeletePilot,
-  adminListProcesses,
-  adminListPilots,
   adminPatchPilot,
   adminSetPilotProcesses,
   type Pilot,
 } from "../../../shared/api";
-import { getErrorMessage } from "../../../shared/utils/error";
-import { formatProcessLabel } from "../../../shared/utils/format";
-
-type ProcessOption = {
-  id: string;
-  code: string;
-  name: string;
-};
+import { useAdminPilots, useProcessOptions } from "../../../shared/hooks";
+import { getErrorMessage, formatProcessLabel } from "../../../shared/utils";
 
 type PilotWithProcesses = Pilot & {
   processIds?: string[];
 };
 
-
 export default function AdminPilotsPage() {
-  const [items, setItems] = useState<PilotWithProcesses[]>([]);
-  const [loading, setLoading] = useState(false);
+  // Data hooks
+  const { items, loading, reload } = useAdminPilots();
+  const { processes, options: processOptions, byId: processById, loading: loadingProcesses } = useProcessOptions();
 
-  const [processes, setProcesses] = useState<ProcessOption[]>([]);
-  const [loadingProcesses, setLoadingProcesses] = useState(false);
-
-  const processById = useMemo(() => new Map(processes.map((p) => [p.id, p])), [processes]);
-
+  // UI state
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<PilotWithProcesses | null>(null);
   const [form] = Form.useForm();
 
+  // Filters
   const [q, setQ] = useState("");
   const [processFilter, setProcessFilter] = useState<string | null>(null);
-
-  async function loadProcesses() {
-    try {
-      setLoadingProcesses(true);
-      const res = await adminListProcesses();
-      const list = (res.data || []).map((p: any) => ({
-        id: p.id,
-        code: p.code,
-        name: p.name,
-      }));
-      setProcesses(list);
-    } catch (e) {
-      message.error(getErrorMessage(e));
-    } finally {
-      setLoadingProcesses(false);
-    }
-  }
-
-  async function reload() {
-    try {
-      setLoading(true);
-      const res = await adminListPilots();
-      setItems((res.data || []) as PilotWithProcesses[]);
-    } catch (e) {
-      message.error(getErrorMessage(e));
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    loadProcesses();
-    reload();
-  }, []);
 
   const filteredItems = useMemo(() => {
     const qq = q.trim().toLowerCase();
 
     return (items || []).filter((s) => {
       const okName = !qq || String(s.name || "").toLowerCase().includes(qq);
-      const okProcess = !processFilter || (s.processIds || []).includes(processFilter);
+      const okProcess = !processFilter || ((s as PilotWithProcesses).processIds || []).includes(processFilter);
       return okName && okProcess;
     });
   }, [items, q, processFilter]);
 
+  // ----------------------------
+  // Drawer open / edit / create
+  // ----------------------------
   function openCreate() {
     setEditing(null);
     setOpen(true);
@@ -126,6 +85,9 @@ export default function AdminPilotsPage() {
     });
   }
 
+  // ----------------------------
+  // Save / Delete
+  // ----------------------------
   async function savePilot() {
     try {
       const v = await form.validateFields();
@@ -179,6 +141,9 @@ export default function AdminPilotsPage() {
     }
   }
 
+  // ----------------------------
+  // Table columns
+  // ----------------------------
   const columns: ColumnsType<PilotWithProcesses> = [
     {
       title: "Nom",
@@ -187,7 +152,6 @@ export default function AdminPilotsPage() {
       width: 260,
       sorter: (a, b) => String(a.name || "").localeCompare(String(b.name || "")),
     },
-
     {
       title: "Statut",
       key: "isActive",
@@ -221,17 +185,17 @@ export default function AdminPilotsPage() {
     },
   ];
 
+  // ----------------------------
+  // Render
+  // ----------------------------
   return (
     <div style={{ padding: 16 }}>
-      {/* Header + Toolbar */}
       <Row gutter={[16, 16]} align="middle" justify="space-between" style={{ marginBottom: 12 }}>
         <Col flex="auto">
           <Typography.Title level={4} style={{ margin: 0 }}>
             Pilotes
           </Typography.Title>
-          <Typography.Text type="secondary">
-            {filteredItems.length} élément(s) affiché(s)
-          </Typography.Text>
+          <Typography.Text type="secondary">{filteredItems.length} élément(s) affiché(s)</Typography.Text>
         </Col>
 
         <Col flex="none">
@@ -264,10 +228,7 @@ export default function AdminPilotsPage() {
             loading={loadingProcesses}
             value={processFilter}
             onChange={(v) => setProcessFilter(v ?? null)}
-            options={processes.map((p) => ({
-              value: p.id,
-              label: formatProcessLabel(p),
-            }))}
+            options={processOptions}
             showSearch
             optionFilterProp="label"
           />
@@ -277,7 +238,7 @@ export default function AdminPilotsPage() {
       <Table
         rowKey="id"
         columns={columns}
-        dataSource={filteredItems}
+        dataSource={filteredItems as PilotWithProcesses[]}
         loading={loading}
         pagination={{ pageSize: 8, showSizeChanger: false }}
         tableLayout="fixed"
@@ -286,13 +247,14 @@ export default function AdminPilotsPage() {
           expandedRowRender: (r) => {
             const list = (r.processIds || [])
               .map((id) => processById.get(id))
-              .filter(Boolean) as ProcessOption[];
+              .filter(Boolean);
+
             if (!list.length) return <Typography.Text type="secondary">Aucun processus</Typography.Text>;
 
             return (
               <Space size={[6, 6]} wrap>
                 {list.map((p) => (
-                  <Tag key={p.id}>{formatProcessLabel(p)}</Tag>
+                  <Tag key={p!.id}>{formatProcessLabel(p!)}</Tag>
                 ))}
               </Space>
             );
@@ -318,10 +280,7 @@ export default function AdminPilotsPage() {
               mode="multiple"
               placeholder="Sélectionnez un ou plusieurs processus"
               loading={loadingProcesses}
-              options={processes.map((p) => ({
-                value: p.id,
-                label: formatProcessLabel(p),
-              }))}
+              options={processOptions}
               showSearch
               optionFilterProp="label"
               allowClear

@@ -8,6 +8,8 @@ import { getToken, setTokenGetter } from "./shared/api";
 import { AuthProvider } from "./app/providers/AuthProvider";
 import "./styles/fonts.css";
 import "./styles/global.css";
+import "./styles/typography.css";
+
 
 // Initialize API client with token getter
 setTokenGetter(getToken);
