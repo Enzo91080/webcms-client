@@ -15,6 +15,7 @@ type ProcessOption = {
   id: string;
   code: string;
   name: string;
+  processType?: string | null;
 };
 
 export default function AdminSipocPage() {
@@ -47,6 +48,7 @@ export default function AdminSipocPage() {
         id: p.id,
         code: p.code,
         name: p.name,
+        processType: p.processType || null,
       }));
       items.sort((a, b) => a.code.localeCompare(b.code));
       setProcesses(items);
@@ -203,6 +205,7 @@ export default function AdminSipocPage() {
             phases={phases}
             readOnly={false}
             onChange={handlePhasesChange}
+            processList={processes}
           />
         )
       ) : (

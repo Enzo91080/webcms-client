@@ -25,7 +25,7 @@ import LogigrammeViewer from "../../logigramme/components/LogigrammeViewer";
 import { SipocVisioTable } from "../../sipoc/components/SipocVisioTable";
 import { ProcessHeroCard, ProcessLegend } from "../components";
 
-import { getCartography, getPath, getProcessByCode } from "../../../shared/api";
+import { getCartography, getPath, getProcessByCode, getProcessListLite } from "../../../shared/api";
 import type { ProcessFull, ProcessLite, PathItem, ProcessStakeholder } from "../../../shared/types";
 import { getErrorMessage, normalizeDocs, normalizeObjectives } from "../../../shared/utils";
 
@@ -42,6 +42,7 @@ export default function ProcessPage() {
   const [siblings, setSiblings] = useState<ProcessLite[]>([]);
   const [error, setError] = useState<string>("");
 
+  const [sipocProcessList, setSipocProcessList] = useState<{ id: string; name: string; code: string }[]>([]);
   const [sipocOpen, setSipocOpen] = useState(false);
   const [sipocFocusRef, setSipocFocusRef] = useState<string | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -79,9 +80,9 @@ export default function ProcessPage() {
         setPath(pathItems);
 
         if (!proc.parentProcessId) {
-          const roots = await getCartography().then((r) => r.data);
+          const cartoData = await getCartography().then((r) => r.data);
           if (!alive) return;
-          setSiblings(roots);
+          setSiblings(cartoData.roots ?? cartoData.valueChain ?? []);
           return;
         }
 
@@ -105,6 +106,13 @@ export default function ProcessPage() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [code]);
+
+  // Fetch lightweight process list for SIPOC display
+  useEffect(() => {
+    getProcessListLite()
+      .then((res) => setSipocProcessList(res.data))
+      .catch(() => {});
+  }, []);
 
   // Derived data
   const breadcrumb = useMemo(() => {
@@ -382,6 +390,7 @@ export default function ProcessPage() {
                 rows={process.sipoc.rows}
                 phases={(process.sipoc as any)?.phases}
                 focusRef={sipocFocusRef}
+                processList={sipocProcessList}
               />
             </div>
           ) : (

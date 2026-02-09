@@ -2,6 +2,7 @@ import { ReloadOutlined, SaveOutlined, UndoOutlined } from "@ant-design/icons";
 import { Alert, Button, message, Space, Typography } from "antd";
 import { useEffect, useState } from "react";
 import { adminGetSipoc, adminUpsertSipoc } from "../../../shared/api";
+import { useProcessOptions } from "../../../shared/hooks";
 import type { SipocPhase } from "../../../shared/types";
 import { getErrorMessage } from "../../../shared/utils/error";
 import { SipocVisioTable } from "./SipocVisioTable";
@@ -21,6 +22,8 @@ export default function SipocEditor({
   processName?: string;
   onSaved?: (phases: SipocPhase[]) => void;
 }) {
+  const { processes } = useProcessOptions();
+
   const [phases, setPhases] = useState<SipocPhase[]>([]);
   const [originalPhases, setOriginalPhases] = useState<SipocPhase[]>([]);
   const [loading, setLoading] = useState(false);
@@ -138,6 +141,7 @@ export default function SipocEditor({
         phases={phases}
         readOnly={false}
         onChange={handlePhasesChange}
+        processList={processes}
       />
     </div>
   );

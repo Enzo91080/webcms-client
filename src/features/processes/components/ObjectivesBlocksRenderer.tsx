@@ -66,20 +66,25 @@ export function ObjectivesBlocksRenderer({ blocks, textStyle, variant = "light" 
             style={{ marginBottom: 8 }}
             renderItem={(item, itemIdx) => (
               <List.Item style={{ border: "none", padding: "4px 0" }}>
-                <Typography.Text style={style}>
+                <div style={{ display: "flex", alignItems: "baseline", width: "100%" }}>
                   <span
                     style={{
                       fontWeight: 800,
-                      marginRight: 8,
                       color: bulletColor,
-                      minWidth: 20,
-                      display: "inline-block",
+                      minWidth: 28,
+                      flexShrink: 0,
+                      textAlign: "right",
+                      paddingRight: 8,
+                      fontSize: style.fontSize,
+                      lineHeight: style.lineHeight,
                     }}
                   >
                     {block.type === "numbered" ? `${itemIdx + 1}.` : "•"}
                   </span>
-                  {item}
-                </Typography.Text>
+                  <Typography.Text style={{ ...style, flex: 1, textAlign: "justify" }}>
+                    {item}
+                  </Typography.Text>
+                </div>
               </List.Item>
             )}
           />

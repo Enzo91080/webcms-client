@@ -13,11 +13,12 @@ import {
   Table,
   Tabs,
   Tag,
+  Tooltip,
   Typography,
   message,
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import { PlusOutlined, ReloadOutlined } from "@ant-design/icons";
+import { DeleteOutlined, EditOutlined, PlusOutlined, ReloadOutlined } from "@ant-design/icons";
 import { useMemo, useState } from "react";
 
 import { LogigrammeEditor } from "../../logigramme/components";
@@ -48,6 +49,7 @@ import {
   ObjectiveBlock,
   StakeholderLinkFields,
   ProcessStakeholder,
+  ProcessType,
 } from "../../../shared/types";
 import {
   useAdminProcesses,
@@ -59,6 +61,25 @@ import {
   normalizeDocs,
   parseObjectivesToBlocks,
 } from "../../../shared/utils";
+
+// ============================================================================
+// Constants
+// ============================================================================
+
+const PROCESS_TYPE_LABELS: Record<string, string> = {
+  internal: "Interne",
+  external: "Externe",
+};
+
+const PROCESS_TYPE_OPTIONS = [
+  { value: "internal", label: "Interne" },
+  { value: "external", label: "Externe" },
+];
+
+const PROCESS_TYPE_FILTER_OPTIONS = [
+  { value: "", label: "Tous" },
+  ...PROCESS_TYPE_OPTIONS,
+];
 
 // ============================================================================
 // Component
@@ -81,6 +102,7 @@ export default function AdminProcessesPage() {
 
   const [stakeholderLinks, setStakeholderLinks] = useState<StakeholderLinkData[]>([]);
   const [q, setQ] = useState("");
+  const [typeFilter, setTypeFilter] = useState<string>("");
 
   const [form] = Form.useForm();
 
@@ -96,22 +118,30 @@ export default function AdminProcessesPage() {
   }, [items]);
 
   const filteredItems = useMemo(() => {
+    let result = items;
+
+    if (typeFilter) {
+      result = result.filter((p) => p.processType === typeFilter);
+    }
+
     const query = q.trim().toLowerCase();
-    if (!query) return items;
+    if (query) {
+      result = result.filter((p) => {
+        const hay = [
+          p.code,
+          p.name,
+          ...(Array.isArray(p.pilots) ? p.pilots.map((x) => getPilotName(x)) : []),
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
 
-    return items.filter((p) => {
-      const hay = [
-        p.code,
-        p.name,
-        ...(Array.isArray(p.pilots) ? p.pilots.map((x) => getPilotName(x)) : []),
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
+        return hay.includes(query);
+      });
+    }
 
-      return hay.includes(query);
-    });
-  }, [items, q]);
+    return result;
+  }, [items, q, typeFilter]);
 
   const treeData = useMemo(() => buildProcessTree(filteredItems), [filteredItems]);
 
@@ -209,6 +239,7 @@ export default function AdminProcessesPage() {
         parentProcessId: proc.parentProcessId || "",
         orderInParent: proc.orderInParent ?? 1,
         isActive: Boolean(proc.isActive ?? true),
+        processType: proc.processType || null,
         title: (proc as any).title || "",
         objectivesBlocks,
         pilotIds,
@@ -235,6 +266,7 @@ export default function AdminProcessesPage() {
       parentProcessId: "",
       orderInParent: 1,
       isActive: true,
+      processType: null,
       title: "",
       objectivesBlocks: [],
       selectedStakeholderIds: [],
@@ -280,6 +312,7 @@ export default function AdminProcessesPage() {
         parentProcessId: v.parentProcessId ? String(v.parentProcessId) : null,
         orderInParent: Number(v.orderInParent || 1),
         isActive: Boolean(v.isActive),
+        processType: v.processType || null,
         title: String(v.title || ""),
         objectivesBlocks: Array.isArray(v.objectivesBlocks) ? v.objectivesBlocks : [],
         referenceDocuments: Array.isArray(v.referenceDocuments) ? v.referenceDocuments : [],
@@ -353,7 +386,23 @@ export default function AdminProcessesPage() {
   // ----------------------------
   const columns: ColumnsType<ProcessFull> = [
     { title: "Code", dataIndex: "code", key: "code", width: 120 },
-    { title: "Nom", dataIndex: "name", key: "name" },
+    {
+      title: "Nom",
+      dataIndex: "name",
+      key: "name",
+      render: (value: string, record: any) => (
+        <span
+          className=""
+          style={{ cursor: "pointer" }}
+          onClick={() => openEdit(record)}
+          role="button"
+          tabIndex={0}
+        >
+          {value}
+        </span>
+      ),
+    },
+
     {
       title: "Parent",
       key: "parent",
@@ -370,6 +419,17 @@ export default function AdminProcessesPage() {
       width: 220,
       render: (_: any, r: ProcessFull) => <PilotsCell pilots={r.pilots as any} />,
     },
+    {
+      title: "Type",
+      key: "processType",
+      width: 160,
+      render: (_: any, r: ProcessFull) => {
+        const label = r.processType ? PROCESS_TYPE_LABELS[r.processType] : null;
+        if (!label) return <Tag>—</Tag>;
+        const color = r.processType === "internal" ? "blue" : "orange";
+        return <Tag color={color}>{label}</Tag>;
+      },
+    },
     { title: "Ordre", dataIndex: "orderInParent", key: "orderInParent", width: 90 },
     {
       title: "Actif",
@@ -385,13 +445,14 @@ export default function AdminProcessesPage() {
       width: 220,
       render: (_: any, r: ProcessFull) => (
         <Space>
-          <Button size="small" onClick={() => openEdit(r)}>
-            Éditer
-          </Button>
+
+          <Tooltip title="Éditer">
+            <Button icon={<EditOutlined />} size="small" onClick={() => openEdit(r)} />
+          </Tooltip>
           <Popconfirm title="Supprimer ce processus ?" onConfirm={() => doDelete(r)}>
-            <Button size="small" danger>
-              Supprimer
-            </Button>
+            <Tooltip title="Supprimer">
+              <Button icon={<DeleteOutlined />} size="small" danger />
+            </Tooltip>
           </Popconfirm>
         </Space>
       ),
@@ -421,6 +482,15 @@ export default function AdminProcessesPage() {
               onChange={(e) => setQ(e.target.value)}
               placeholder="Rechercher (code, nom, pilote...)"
               style={{ width: 340 }}
+            />
+            
+
+            <Select
+              value={typeFilter}
+              onChange={setTypeFilter}
+              options={PROCESS_TYPE_FILTER_OPTIONS}
+              style={{ width: 200 }}
+              placeholder="Filtrer par type"
             />
 
             <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
@@ -514,6 +584,16 @@ export default function AdminProcessesPage() {
                       <Col xs={24} md={6}>
                         <Form.Item name="isActive" label="Actif" valuePropName="checked">
                           <Switch />
+                        </Form.Item>
+                      </Col>
+
+                      <Col xs={24} md={12}>
+                        <Form.Item name="processType" label="Type de processus">
+                          <Select
+                            options={PROCESS_TYPE_OPTIONS}
+                            placeholder="Sélectionner un type"
+                            allowClear
+                          />
                         </Form.Item>
                       </Col>
                     </Row>

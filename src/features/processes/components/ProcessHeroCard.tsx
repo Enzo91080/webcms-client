@@ -50,8 +50,6 @@ export function ProcessHeroCard({
   docs,
   objectivesBlocks,
   objectives,
-  statusLabel = "Validé",
-  versionLabel = "3.0",
   applicationDate = "22/12/2025",
 }: Props) {
   const headerBg = "linear-gradient(135deg,#0069c8 0%,#0069c8 50%,rgb(2, 80, 152) 100%)";
@@ -137,31 +135,18 @@ export function ProcessHeroCard({
               <Space size="large" wrap>
                 <Space direction="vertical" size={4}>
                   <Typography.Text style={{ fontSize: 14, color: "rgba(255,255,255,0.75)", display: "block" }}>
-                    Statut
-                  </Typography.Text>
-                  <Badge
-                    status="success"
-                    text={<span style={{ color: "white", fontWeight: 600, fontSize: 14 }}>{statusLabel}</span>}
-                  />
-                </Space>
-
-                <Divider type="vertical" style={{ borderColor: "rgba(255,255,255,0.22)", height: 40 }} />
-
-                <Space direction="vertical" size={4}>
-                  <Typography.Text style={{ fontSize: 14, color: "rgba(255,255,255,0.75)", display: "block" }}>
-                    Version
+                    Date d'application
                   </Typography.Text>
                   <Space>
-                    <TagOutlined style={{ color: "rgba(255,255,255,0.85)" }} />
-                    <span style={{ color: "white", fontWeight: 600, fontSize: 14 }}>{versionLabel}</span>
+                    <CalendarOutlined style={{ color: "rgba(255,255,255,0.85)" }} />
+                    <span style={{ color: "white", fontWeight: 600, fontSize: 14 }}>{applicationDate}</span>
                   </Space>
                 </Space>
-
                 <Divider type="vertical" style={{ borderColor: "rgba(255,255,255,0.22)", height: 40 }} />
 
                 <Space direction="vertical" size={4}>
                   <Typography.Text style={{ fontSize: 14, color: "rgba(255,255,255,0.75)", display: "block" }}>
-                    Date d'application
+                    Parties Intéressées
                   </Typography.Text>
                   <Space>
                     <CalendarOutlined style={{ color: "rgba(255,255,255,0.85)" }} />

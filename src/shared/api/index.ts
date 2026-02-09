@@ -7,6 +7,7 @@ export { login, me, getToken, setToken, clearToken } from "./auth.api";
 // Process API
 export {
   getCartography,
+  getProcessListLite,
   getProcessByCode,
   getPath,
   resolveCodes,

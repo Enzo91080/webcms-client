@@ -1,6 +1,7 @@
-import { Button, Layout, Menu } from "antd";
+import { Avatar, Button, Layout, Menu, Tooltip } from "antd";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../providers/AuthProvider";
+import { BRAND } from "../../antConfig";
 
 const { Sider, Content, Header } = Layout;
 
@@ -21,6 +22,8 @@ export default function AdminLayout() {
     [...NAV]
       .sort((a, b) => b.to.length - a.to.length)
       .find((item) => pathname.startsWith(item.to))?.key ?? "processes";
+
+  const userInitial = user?.name?.trim()?.charAt(0)?.toUpperCase() ?? "?";
 
   return (
     <Layout style={{ minHeight: "100vh" }}>
@@ -49,7 +52,11 @@ export default function AdminLayout() {
         >
           <div style={{ fontWeight: 700 }}>Gestion</div>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <span style={{ opacity: 0.8, fontSize: 12 }}>{user?.email}</span>
+            <Tooltip placement="left" title={user?.name}>
+              <Avatar style={{ backgroundColor: BRAND.primary, verticalAlign: 'middle' }} size="large">
+                {userInitial}
+              </Avatar>
+            </Tooltip>
             <Button type="link" onClick={logout} style={{ fontWeight: 700, padding: 0 }}>
               Déconnexion
             </Button>

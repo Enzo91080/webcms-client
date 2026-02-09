@@ -3,6 +3,7 @@ import {
   Button,
   Input,
   Popconfirm,
+  Select,
   Space,
   Tag,
   Tooltip,
@@ -23,6 +24,8 @@ type SipocVisioTableProps = {
   readOnly?: boolean;
   /** Called when phases change (only when readOnly=false) */
   onChange?: (phases: SipocPhase[]) => void;
+  /** Processus disponibles pour les Select fournisseur/client */
+  processList?: { id: string; name: string; code: string, processType?: string | null }[];
 };
 
 type InternalGroup = {
@@ -34,6 +37,34 @@ type InternalGroup = {
 export function SipocVisioTable(props: SipocVisioTableProps) {
   const navigate = useNavigate();
   const readOnly = props.readOnly ?? true;
+
+  type OptGroup = { label: string; options: { value: string; label: string }[] };
+
+  const processSelectOptions = useMemo((): OptGroup[] => {
+    const list = props.processList || [];
+    const internal = list.filter((p) => p.processType === "internal");
+    const external = list.filter((p) => p.processType === "external");
+    const other = list.filter((p) => !p.processType);
+
+    const toOpts = (items: typeof list) =>
+      items.map((p) => ({ value: p.id, label: p.code }));
+
+    if (!internal.length && !external.length) {
+      return [{ label: "Processus", options: toOpts(list) }];
+    }
+
+    const groups: OptGroup[] = [];
+    if (internal.length) groups.push({ label: "Interne", options: toOpts(internal) });
+    if (external.length) groups.push({ label: "Externe", options: toOpts(external) });
+    if (other.length) groups.push({ label: "Non classé", options: toOpts(other) });
+    return groups;
+  }, [props.processList]);
+
+  const processById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const p of props.processList || []) map.set(p.id, p.name);
+    return map;
+  }, [props.processList]);
 
   const focusKey = (props.focusRef ?? "").trim();
   const rows = useMemo(() => props.rows ?? [], [props.rows]);
@@ -367,6 +398,30 @@ export function SipocVisioTable(props: SipocVisioTableProps) {
     );
   };
 
+  const renderProcessSelectCell = (
+    value: string | undefined,
+    phaseIndex: number,
+    rowIndex: number,
+    field: keyof SipocRow,
+    placeholder: string
+  ) => {
+    const displayName = value ? (processById.get(value) || value) : undefined;
+    if (readOnly) return <Typography.Text>{displayName}</Typography.Text>;
+    return (
+      <Select
+        size="small"
+        value={value || undefined}
+        options={processSelectOptions}
+        placeholder={placeholder}
+        showSearch
+        allowClear
+        optionFilterProp="label"
+        onChange={(val) => updateRow(phaseIndex, rowIndex, field, val || "")}
+        style={{ width: "100%" }}
+      />
+    );
+  };
+
   return (
     <div className="sipoc-table-container">
       <div className="sipoc-table-scroll">
@@ -457,32 +512,17 @@ export function SipocVisioTable(props: SipocVisioTableProps) {
                     {/* Processus fournisseur */}
                     <td className="sipoc-td sipoc-col-fournisseur">
                       {readOnly ? (
-                        <Typography.Text>{r?.processusFournisseur}</Typography.Text>
+                        <Typography.Text>{processById.get(r?.processusFournisseur || "") || r?.processusFournisseur}</Typography.Text>
                       ) : (
                         <Space>
-                          {renderTextAreaCell(
+                          {renderProcessSelectCell(
                             r?.processusFournisseur,
                             phaseIndex,
                             rowIndex,
                             "processusFournisseur",
-                            "Processus fournisseur",
-                            1,
-                            3
+                            "Processus fournisseur"
                           )}
-                          <Popconfirm
-                            title="Supprimer cette ligne ?"
-                            onConfirm={() => deleteRow(phaseIndex, rowIndex)}
-                            okText="Supprimer"
-                            cancelText="Annuler"
-                            okButtonProps={{ danger: true }}
-                          >
-                            <Button
-                              size="small"
-                              danger
-                              icon={<DeleteOutlined />}
-                              style={{ minWidth: 24, padding: "0 4px" }}
-                            />
-                          </Popconfirm>
+
                         </Space>
                       )}
                     </td>
@@ -630,15 +670,28 @@ export function SipocVisioTable(props: SipocVisioTableProps) {
 
                     {/* Processus client */}
                     <td className="sipoc-td sipoc-col-client">
-                      {renderTextAreaCell(
+                      {renderProcessSelectCell(
                         r?.designationProcessusClient || r?.processusClient,
                         phaseIndex,
                         rowIndex,
                         "designationProcessusClient",
-                        "Processus client",
-                        1,
-                        3
+                        "Processus client"
                       )}
+                      
+                      <Popconfirm
+                        title="Supprimer cette ligne ?"
+                        onConfirm={() => deleteRow(phaseIndex, rowIndex)}
+                        okText="Supprimer"
+                        cancelText="Annuler"
+                        okButtonProps={{ danger: true }}
+                      >
+                        <Button
+                          size="small"
+                          danger
+                          icon={<DeleteOutlined />}
+                          style={{ minWidth: 24, padding: "0 4px" }}
+                        />
+                      </Popconfirm>
                     </td>
                   </tr>
                 ))}

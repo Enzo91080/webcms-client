@@ -7,7 +7,7 @@ import { theme as antdTheme } from "antd";
  * Primary: #007BC4
  * Ink (text): #0B1F3B
  */
-const BRAND = {
+export const BRAND = {
   primary: "#0069c8",
   ink: "#0B1F3B",
   inkMuted: "rgba(11,31,59,0.68)",

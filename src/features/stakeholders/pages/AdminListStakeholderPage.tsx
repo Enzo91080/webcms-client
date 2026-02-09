@@ -231,6 +231,16 @@ export default function AdminStakeholdersPage() {
       key: "name",
       width: 260,
       sorter: (a, b) => String(a.name || "").localeCompare(String(b.name || "")),
+      render: (value: string, record: any) => (
+        <span
+          style={{ cursor: "pointer" }}
+          onClick={() => openEdit(record)}
+          role="button"
+          tabIndex={0}
+        >
+          {value}
+        </span>
+      ),
     },
     {
       title: "Statut",

@@ -32,6 +32,16 @@ export type ProcessStakeholder = {
   link?: StakeholderLinkFields;
 };
 
+export type ProcessType = "internal" | "external";
+
+export type CartographySlot =
+  | "manager"
+  | "value_chain"
+  | "left_panel"
+  | "right_panel"
+  | "left_box"
+  | "right_box";
+
 export type ProcessLite = {
   parentProcessId: string | null;
   id: string;
@@ -40,6 +50,17 @@ export type ProcessLite = {
   title?: string;
   orderInParent: number;
   isActive: boolean;
+  processType?: ProcessType | null;
+
+  // Cartography (racines)
+  cartographySlot?: CartographySlot | null;
+  cartographyOrder?: number | null;
+};
+
+export type CartographyDTO = {
+  manager: ProcessLite | null;
+  valueChain: ProcessLite[];
+  roots?: ProcessLite[]; // optionnel si tu le gardes dans l’API
 };
 
 export type PilotRef = {

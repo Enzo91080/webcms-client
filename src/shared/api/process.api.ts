@@ -1,4 +1,5 @@
 import type { PathItem, ProcessFull, ProcessLite, SipocRow, LogiNode, LogiEdge, LegendItem, StakeholderLinkFields } from "../types";
+import { CartographyDTO } from "../types/process";
 import { request } from "./client";
 
 // Payload pour les stakeholders d'un process avec leurs champs de lien
@@ -6,8 +7,13 @@ export type ProcessStakeholderItem = {
   stakeholderId: string;
 } & StakeholderLinkFields;
 
-export async function getCartography() {
-  return request<{ data: ProcessLite[] }>("/api/processes/cartography");
+export async function getCartography(): Promise<{ data: CartographyDTO }> {
+  return request<{ data: CartographyDTO }>("/api/processes/cartography"); // exemple
+}
+
+
+export async function getProcessListLite(): Promise<{ data: { id: string; name: string; code: string; processType?: string | null }[] }> {
+  return request("/api/processes/lite");
 }
 
 export async function getProcessByCode(code: string) {

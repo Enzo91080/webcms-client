@@ -172,24 +172,38 @@
   clip-path: polygon(8% 0, 100% 0, 100% 100%, 0 100%);
 }
 
-/* Color variants */
-.p02 {
+
+/* Value chain colors (data-driven)
+   - Based on cartographyOrder (vc-1, vc-2, ...)
+   - Keeps your previous palette (was p02..p06)
+*/
+
+/* Keep legacy palette EXACTLY as before (p02..p06)
+   - We just allow the new data-driven classes (vc-1..vc-5) to reuse it.
+*/
+
+.p02,
+.vcTile.vc-1 {
   @apply bg-[#f1d9c2];
 }
 
-.p03 {
+.p03,
+.vcTile.vc-2 {
   @apply bg-[#f2c9f1];
 }
 
-.p04 {
+.p04,
+.vcTile.vc-3 {
   @apply bg-[#18a0ff] text-white;
   width: 140px;
 }
 
-.p05 {
+.p05,
+.vcTile.vc-4 {
   @apply bg-[#dfe5ef];
 }
 
-.p06 {
+.p06,
+.vcTile.vc-5 {
   @apply bg-[#d9f0b9];
 }
