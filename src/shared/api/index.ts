@@ -52,3 +52,10 @@ export {
   adminUpsertSipoc,
   type AdminSipocResponse,
 } from "./sipoc.api";
+
+// Cartography Admin API
+export {
+  adminGetCartography,
+  adminSaveCartography,
+  type CartographyLayoutInput,
+} from "./cartography.api";

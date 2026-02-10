@@ -6,11 +6,11 @@ import { BRAND } from "../../antConfig";
 const { Sider, Content, Header } = Layout;
 
 const NAV = [
+  { key: "cartographie", label: "Cartographie", to: "/admin/cartographie" },
   { key: "processes", label: "Processus", to: "/admin/processes" },
   { key: "stakeholders", label: "Parties intéressées", to: "/admin/partie-interressees" },
   { key: "pilots", label: "Pilotes", to: "/admin/pilotes" },
   { key: "sipoc", label: "SIPOC", to: "/admin/sipoc" },
-  { key: "raci", label: "RACI", to: "/admin/raci" },
 ] as const;
 
 export default function AdminLayout() {
@@ -21,7 +21,7 @@ export default function AdminLayout() {
   const selectedKey =
     [...NAV]
       .sort((a, b) => b.to.length - a.to.length)
-      .find((item) => pathname.startsWith(item.to))?.key ?? "processes";
+      .find((item) => pathname.startsWith(item.to))?.key ?? "cartographie";
 
   const userInitial = user?.name?.trim()?.charAt(0)?.toUpperCase() ?? "?";
 

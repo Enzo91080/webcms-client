@@ -42,7 +42,7 @@ export default function ProcessPage() {
   const [siblings, setSiblings] = useState<ProcessLite[]>([]);
   const [error, setError] = useState<string>("");
 
-  const [sipocProcessList, setSipocProcessList] = useState<{ id: string; name: string; code: string }[]>([]);
+  const [sipocProcessList, setSipocProcessList] = useState<{ id: string; name: string; code: string; processType?: string | null; parentProcessId?: string | null }[]>([]);
   const [sipocOpen, setSipocOpen] = useState(false);
   const [sipocFocusRef, setSipocFocusRef] = useState<string | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -82,7 +82,19 @@ export default function ProcessPage() {
         if (!proc.parentProcessId) {
           const cartoData = await getCartography().then((r) => r.data);
           if (!alive) return;
-          setSiblings(cartoData.roots ?? cartoData.valueChain ?? []);
+          const allItems = [
+            ...(cartoData.valueChain ?? []),
+            ...(cartoData.leftPanel ?? []),
+            ...(cartoData.rightPanel ?? []),
+          ];
+          setSiblings(allItems.map((item) => ({
+            id: item.process.id,
+            code: item.process.code,
+            name: item.label ?? item.process.name,
+            parentProcessId: null,
+            orderInParent: item.slotOrder,
+            isActive: true,
+          })));
           return;
         }
 

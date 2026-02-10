@@ -1,6 +1,7 @@
 import {
   Button,
   Col,
+  ColorPicker,
   Drawer,
   Form,
   Input,
@@ -101,6 +102,7 @@ export default function AdminProcessesPage() {
   const [activeTab, setActiveTab] = useState<string>("general");
 
   const [stakeholderLinks, setStakeholderLinks] = useState<StakeholderLinkData[]>([]);
+  const [showAdvancedStakeholders, setShowAdvancedStakeholders] = useState(false);
   const [q, setQ] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("");
 
@@ -240,6 +242,7 @@ export default function AdminProcessesPage() {
         orderInParent: proc.orderInParent ?? 1,
         isActive: Boolean(proc.isActive ?? true),
         processType: proc.processType || null,
+        color: proc.color || null,
         title: (proc as any).title || "",
         objectivesBlocks,
         pilotIds,
@@ -247,6 +250,7 @@ export default function AdminProcessesPage() {
         referenceDocuments: normalizeDocs((proc as any).referenceDocuments),
       },
       stakeholderLinks: links,
+      showAdvancedStakeholders: Boolean(proc.showAdvancedStakeholders),
     };
   }
 
@@ -257,6 +261,7 @@ export default function AdminProcessesPage() {
     setEditing(null);
     setActiveTab("general");
     setStakeholderLinks([]);
+    setShowAdvancedStakeholders(false);
     setOpen(true);
 
     form.resetFields();
@@ -282,6 +287,7 @@ export default function AdminProcessesPage() {
 
     const lite = deriveFormFromProcess(p);
     setStakeholderLinks(lite.stakeholderLinks);
+    setShowAdvancedStakeholders(lite.showAdvancedStakeholders);
 
     form.resetFields();
     form.setFieldsValue(lite.formValues);
@@ -293,6 +299,7 @@ export default function AdminProcessesPage() {
 
       const hydrated = deriveFormFromProcess(proc);
       setStakeholderLinks(hydrated.stakeholderLinks);
+      setShowAdvancedStakeholders(hydrated.showAdvancedStakeholders);
       form.setFieldsValue(hydrated.formValues);
     } catch (e) {
       console.warn(e);
@@ -313,9 +320,11 @@ export default function AdminProcessesPage() {
         orderInParent: Number(v.orderInParent || 1),
         isActive: Boolean(v.isActive),
         processType: v.processType || null,
+        color: v.color || null,
         title: String(v.title || ""),
         objectivesBlocks: Array.isArray(v.objectivesBlocks) ? v.objectivesBlocks : [],
         referenceDocuments: Array.isArray(v.referenceDocuments) ? v.referenceDocuments : [],
+        showAdvancedStakeholders,
       };
 
       const pilotIds: string[] = Array.isArray(v.pilotIds) ? v.pilotIds : [];
@@ -385,7 +394,7 @@ export default function AdminProcessesPage() {
   // Table columns
   // ----------------------------
   const columns: ColumnsType<ProcessFull> = [
-    { title: "Code", dataIndex: "code", key: "code", width: 120 },
+    { title: "Code", dataIndex: "code", key: "code", width: 200 },
     {
       title: "Nom",
       dataIndex: "name",
@@ -406,7 +415,7 @@ export default function AdminProcessesPage() {
     {
       title: "Parent",
       key: "parent",
-      width: 140,
+      width: 100,
       render: (_: any, r: ProcessFull) => {
         if (!r.parentProcessId) return <Tag color="blue">Racine</Tag>;
         const parent = items.find((x) => x.id === r.parentProcessId);
@@ -416,7 +425,7 @@ export default function AdminProcessesPage() {
     {
       title: "Pilotes",
       key: "pilots",
-      width: 220,
+      width: 150,
       render: (_: any, r: ProcessFull) => <PilotsCell pilots={r.pilots as any} />,
     },
     {
@@ -442,7 +451,7 @@ export default function AdminProcessesPage() {
     {
       title: "Actions",
       key: "actions",
-      width: 220,
+      width: 100,
       render: (_: any, r: ProcessFull) => (
         <Space>
 
@@ -481,7 +490,7 @@ export default function AdminProcessesPage() {
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="Rechercher (code, nom, pilote...)"
-              style={{ width: 340 }}
+              style={{ width: 600 }}
             />
             
 
@@ -587,13 +596,23 @@ export default function AdminProcessesPage() {
                         </Form.Item>
                       </Col>
 
-                      <Col xs={24} md={12}>
+                      <Col xs={24} md={6}>
                         <Form.Item name="processType" label="Type de processus">
                           <Select
                             options={PROCESS_TYPE_OPTIONS}
                             placeholder="Sélectionner un type"
                             allowClear
                           />
+                        </Form.Item>
+                      </Col>
+
+                      <Col xs={24} md={6}>
+                        <Form.Item
+                          name="color"
+                          label="Couleur"
+                          getValueFromEvent={(color) => color?.toHexString?.() || null}
+                        >
+                          <ColorPicker format="hex" allowClear />
                         </Form.Item>
                       </Col>
                     </Row>
@@ -658,6 +677,8 @@ export default function AdminProcessesPage() {
                     <StakeholderLinksEditor
                       links={stakeholderLinks}
                       onUpdateField={updateLinkField}
+                      showAdvanced={showAdvancedStakeholders}
+                      onShowAdvancedChange={setShowAdvancedStakeholders}
                     />
                   </>
                 ),
@@ -716,7 +737,7 @@ export default function AdminProcessesPage() {
                 key: "preview",
                 label: "Aperçu",
                 children: editing?.id ? (
-                  <ProcessPreview data={editing as any} />
+                  <ProcessPreview data={editing as any} processList={items} />
                 ) : (
                   <Typography.Text type="secondary">
                     Crée d'abord le processus pour voir l'aperçu.

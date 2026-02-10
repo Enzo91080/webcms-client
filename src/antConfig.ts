@@ -61,7 +61,10 @@ export const antdConfig: ThemeConfig = {
     Tabs: {
       colorPrimary: BRAND.primary,
     },
-    
+    TreeSelect: {
+      borderRadius: 10,
+      controlHeight: 40,
+    },
     Layout: {
       bodyBg: BRAND.layout,
       headerBg: BRAND.container,

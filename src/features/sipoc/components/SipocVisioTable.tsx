@@ -3,10 +3,10 @@ import {
   Button,
   Input,
   Popconfirm,
-  Select,
   Space,
   Tag,
   Tooltip,
+  TreeSelect,
   Typography,
 } from "antd";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -24,8 +24,8 @@ type SipocVisioTableProps = {
   readOnly?: boolean;
   /** Called when phases change (only when readOnly=false) */
   onChange?: (phases: SipocPhase[]) => void;
-  /** Processus disponibles pour les Select fournisseur/client */
-  processList?: { id: string; name: string; code: string, processType?: string | null }[];
+  /** Processus disponibles pour les TreeSelect fournisseur/client */
+  processList?: { id: string; name: string; code: string; processType?: string | null; parentProcessId?: string | null }[];
 };
 
 type InternalGroup = {
@@ -38,31 +38,63 @@ export function SipocVisioTable(props: SipocVisioTableProps) {
   const navigate = useNavigate();
   const readOnly = props.readOnly ?? true;
 
-  type OptGroup = { label: string; options: { value: string; label: string }[] };
+  type TreeNode = { value: string; title: string; children?: TreeNode[]; selectable?: boolean };
 
-  const processSelectOptions = useMemo((): OptGroup[] => {
+  const toArray = (val: string | string[] | undefined): string[] => {
+    if (!val) return [];
+    if (Array.isArray(val)) return val;
+    return [val];
+  };
+
+  const processTreeData = useMemo((): TreeNode[] => {
     const list = props.processList || [];
     const internal = list.filter((p) => p.processType === "internal");
     const external = list.filter((p) => p.processType === "external");
     const other = list.filter((p) => !p.processType);
 
-    const toOpts = (items: typeof list) =>
-      items.map((p) => ({ value: p.id, label: p.code }));
+    const toNode = (p: (typeof list)[0]): TreeNode => ({
+      value: p.id,
+      title: `${p.code}`,
+    });
 
-    if (!internal.length && !external.length) {
-      return [{ label: "Processus", options: toOpts(list) }];
+    // Build internal tree hierarchy using parentProcessId
+    const buildInternalTree = (items: typeof list): TreeNode[] => {
+      const byId = new Map<string, TreeNode & { children: TreeNode[] }>();
+      const roots: TreeNode[] = [];
+
+      for (const p of items) byId.set(p.id, { ...toNode(p), children: [] });
+
+      for (const p of items) {
+        const node = byId.get(p.id)!;
+        const parent = p.parentProcessId ? byId.get(p.parentProcessId) : null;
+        if (parent) parent.children.push(node);
+        else roots.push(node);
+      }
+
+      const prune = (nodes: TreeNode[]) => {
+        for (const n of nodes) {
+          if (n.children && n.children.length > 0) prune(n.children);
+          else delete n.children;
+        }
+      };
+      prune(roots);
+      return roots;
+    };
+
+    if (!internal.length && !external.length) return list.map(toNode);
+
+    const tree: TreeNode[] = [];
+    if (internal.length) tree.push(...buildInternalTree(internal));
+    if (external.length) {
+      tree.push({ value: "__externe__", title: "Externe", selectable: false, children: external.map(toNode) });
     }
-
-    const groups: OptGroup[] = [];
-    if (internal.length) groups.push({ label: "Interne", options: toOpts(internal) });
-    if (external.length) groups.push({ label: "Externe", options: toOpts(external) });
-    if (other.length) groups.push({ label: "Non classé", options: toOpts(other) });
-    return groups;
+    if (other.length) tree.push(...other.map(toNode));
+    return tree;
   }, [props.processList]);
 
   const processById = useMemo(() => {
     const map = new Map<string, string>();
-    for (const p of props.processList || []) map.set(p.id, p.name);
+    for (const p of props.processList || []) map.set(p.id, `${p.code}`);
     return map;
   }, [props.processList]);
 
@@ -195,7 +227,7 @@ export function SipocVisioTable(props: SipocVisioTableProps) {
               {
                 numero: String(newRowIndex),
                 phase: g.name,
-                processusFournisseur: "",
+                processusFournisseur: [],
                 entrees: "",
                 ressources: "",
                 raciR: "",
@@ -206,8 +238,8 @@ export function SipocVisioTable(props: SipocVisioTableProps) {
                 designationProcessus: { name: "", url: "" },
                 sorties: "",
                 sortiesProcessus: "",
-                processusClient: "",
-                designationProcessusClient: "",
+                processusClient: [],
+                designationProcessusClient: [],
               },
             ],
           };
@@ -399,25 +431,37 @@ export function SipocVisioTable(props: SipocVisioTableProps) {
   };
 
   const renderProcessSelectCell = (
-    value: string | undefined,
+    value: string | string[] | undefined,
     phaseIndex: number,
     rowIndex: number,
     field: keyof SipocRow,
     placeholder: string
   ) => {
-    const displayName = value ? (processById.get(value) || value) : undefined;
-    if (readOnly) return <Typography.Text>{displayName}</Typography.Text>;
+    const ids = toArray(value);
+
+    if (readOnly) {
+      const labels = ids
+        .map((id) => processById.get(id) || (!/^[0-9a-f]{8}-/.test(id) ? id : null))
+        .filter(Boolean);
+      return <Typography.Text>{labels.length ? labels.join(", ") : "—"}</Typography.Text>;
+    }
+
     return (
-      <Select
+      <TreeSelect
         size="small"
-        value={value || undefined}
-        options={processSelectOptions}
+        value={ids}
+        treeData={processTreeData}
         placeholder={placeholder}
+        multiple
         showSearch
+        treeDefaultExpandAll
         allowClear
-        optionFilterProp="label"
-        onChange={(val) => updateRow(phaseIndex, rowIndex, field, val || "")}
+        filterTreeNode={(input, node) =>
+          String(node?.title ?? "").toLowerCase().includes(input.toLowerCase())
+        }
+        onChange={(val: string[]) => updateRow(phaseIndex, rowIndex, field, val)}
         style={{ width: "100%" }}
+        maxTagCount="responsive"
       />
     );
   };
@@ -511,19 +555,12 @@ export function SipocVisioTable(props: SipocVisioTableProps) {
                   >
                     {/* Processus fournisseur */}
                     <td className="sipoc-td sipoc-col-fournisseur">
-                      {readOnly ? (
-                        <Typography.Text>{processById.get(r?.processusFournisseur || "") || r?.processusFournisseur}</Typography.Text>
-                      ) : (
-                        <Space>
-                          {renderProcessSelectCell(
-                            r?.processusFournisseur,
-                            phaseIndex,
-                            rowIndex,
-                            "processusFournisseur",
-                            "Processus fournisseur"
-                          )}
-
-                        </Space>
+                      {renderProcessSelectCell(
+                        toArray(r?.processusFournisseur),
+                        phaseIndex,
+                        rowIndex,
+                        "processusFournisseur",
+                        "Processus fournisseur"
                       )}
                     </td>
 
@@ -670,28 +707,33 @@ export function SipocVisioTable(props: SipocVisioTableProps) {
 
                     {/* Processus client */}
                     <td className="sipoc-td sipoc-col-client">
-                      {renderProcessSelectCell(
-                        r?.designationProcessusClient || r?.processusClient,
-                        phaseIndex,
-                        rowIndex,
-                        "designationProcessusClient",
-                        "Processus client"
+                      {(() => {
+                        const clientIds = toArray(r?.designationProcessusClient);
+                        return renderProcessSelectCell(
+                          clientIds.length ? clientIds : toArray(r?.processusClient),
+                          phaseIndex,
+                          rowIndex,
+                          "designationProcessusClient",
+                          "Processus client"
+                        );
+                      })()}
+
+                      {!readOnly && (
+                        <Popconfirm
+                          title="Supprimer cette ligne ?"
+                          onConfirm={() => deleteRow(phaseIndex, rowIndex)}
+                          okText="Supprimer"
+                          cancelText="Annuler"
+                          okButtonProps={{ danger: true }}
+                        >
+                          <Button
+                            size="small"
+                            danger
+                            icon={<DeleteOutlined />}
+                            style={{ minWidth: 24, padding: "0 4px" }}
+                          />
+                        </Popconfirm>
                       )}
-                      
-                      <Popconfirm
-                        title="Supprimer cette ligne ?"
-                        onConfirm={() => deleteRow(phaseIndex, rowIndex)}
-                        okText="Supprimer"
-                        cancelText="Annuler"
-                        okButtonProps={{ danger: true }}
-                      >
-                        <Button
-                          size="small"
-                          danger
-                          icon={<DeleteOutlined />}
-                          style={{ minWidth: 24, padding: "0 4px" }}
-                        />
-                      </Popconfirm>
                     </td>
                   </tr>
                 ))}

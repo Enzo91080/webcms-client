@@ -16,6 +16,7 @@ type ProcessOption = {
   code: string;
   name: string;
   processType?: string | null;
+  parentProcessId?: string | null;
 };
 
 export default function AdminSipocPage() {
@@ -49,6 +50,7 @@ export default function AdminSipocPage() {
         code: p.code,
         name: p.name,
         processType: p.processType || null,
+        parentProcessId: p.parentProcessId || null,
       }));
       items.sort((a, b) => a.code.localeCompare(b.code));
       setProcesses(items);
@@ -185,7 +187,7 @@ export default function AdminSipocPage() {
               loading={saving}
               disabled={!selectedProcessId || !hasChanges}
             >
-              Enregistrer
+              Enregistrer 
             </Button>
 
 

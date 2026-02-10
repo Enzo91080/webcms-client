@@ -56,33 +56,27 @@ export function ProcessHeroCard({
 
   // State for stakeholder detail modal
   const [selectedStakeholder, setSelectedStakeholder] = useState<ProcessStakeholder | null>(null);
+  const showAdvanced = Boolean(process.showAdvancedStakeholders);
+
+  const renderCell = (v: string | null | undefined) => (
+    <span style={{ whiteSpace: "pre-line" }}>{v || "—"}</span>
+  );
 
   // Table columns for stakeholder modal
   const stakeholderColumns = [
-    {
-      title: "Besoins",
-      dataIndex: ["link", "needs"],
-      key: "needs",
-      render: (v: string | null | undefined) => v || "—",
-    },
-    {
-      title: "Attentes",
-      dataIndex: ["link", "expectations"],
-      key: "expectations",
-      render: (v: string | null | undefined) => v || "—",
-    },
-    {
-      title: "Critères d'évaluation",
-      dataIndex: ["link", "evaluationCriteria"],
-      key: "evaluationCriteria",
-      render: (v: string | null | undefined) => v || "—",
-    },
-    {
-      title: "Exigences",
-      dataIndex: ["link", "requirements"],
-      key: "requirements",
-      render: (v: string | null | undefined) => v || "—",
-    },
+    { title: "Besoins", dataIndex: ["link", "needs"], key: "needs", render: renderCell },
+    { title: "Attentes", dataIndex: ["link", "expectations"], key: "expectations", render: renderCell },
+    { title: "Critères d'évaluation", dataIndex: ["link", "evaluationCriteria"], key: "evaluationCriteria", render: renderCell },
+    { title: "Exigences", dataIndex: ["link", "requirements"], key: "requirements", render: renderCell },
+    ...(showAdvanced
+      ? [
+          { title: "Forces", dataIndex: ["link", "strengths"], key: "strengths", render: renderCell },
+          { title: "Faiblesses", dataIndex: ["link", "weaknesses"], key: "weaknesses", render: renderCell },
+          { title: "Opportunités", dataIndex: ["link", "opportunities"], key: "opportunities", render: renderCell },
+          { title: "Risques", dataIndex: ["link", "risks"], key: "risks", render: renderCell },
+          { title: "Plan d'actions", dataIndex: ["link", "actionPlan"], key: "actionPlan", render: renderCell },
+        ]
+      : []),
   ];
 
   return (
@@ -135,29 +129,6 @@ export function ProcessHeroCard({
               <Space size="large" wrap>
                 <Space direction="vertical" size={4}>
                   <Typography.Text style={{ fontSize: 14, color: "rgba(255,255,255,0.75)", display: "block" }}>
-                    Date d'application
-                  </Typography.Text>
-                  <Space>
-                    <CalendarOutlined style={{ color: "rgba(255,255,255,0.85)" }} />
-                    <span style={{ color: "white", fontWeight: 600, fontSize: 14 }}>{applicationDate}</span>
-                  </Space>
-                </Space>
-                <Divider type="vertical" style={{ borderColor: "rgba(255,255,255,0.22)", height: 40 }} />
-
-                <Space direction="vertical" size={4}>
-                  <Typography.Text style={{ fontSize: 14, color: "rgba(255,255,255,0.75)", display: "block" }}>
-                    Parties Intéressées
-                  </Typography.Text>
-                  <Space>
-                    <CalendarOutlined style={{ color: "rgba(255,255,255,0.85)" }} />
-                    <span style={{ color: "white", fontWeight: 600, fontSize: 14 }}>{applicationDate}</span>
-                  </Space>
-                </Space>
-
-                <Divider type="vertical" style={{ borderColor: "rgba(255,255,255,0.22)", height: 40 }} />
-
-                <Space direction="vertical" size={4}>
-                  <Typography.Text style={{ fontSize: 14, color: "rgba(255,255,255,0.75)", display: "block" }}>
                     Pilote
                   </Typography.Text>
                   <Space>
@@ -204,6 +175,17 @@ export function ProcessHeroCard({
                     )}
                   </Space>
                 </Space>
+                <Divider type="vertical" style={{ borderColor: "rgba(255,255,255,0.22)", height: 40 }} />
+                <Space direction="vertical" size={4}>
+                  <Typography.Text style={{ fontSize: 14, color: "rgba(255,255,255,0.75)", display: "block" }}>
+                    Date d'application
+                  </Typography.Text>
+                  <Space>
+                    <CalendarOutlined style={{ color: "rgba(255,255,255,0.85)" }} />
+                    <span style={{ color: "white", fontWeight: 600, fontSize: 14 }}>{applicationDate}</span>
+                  </Space>
+                </Space>
+
               </Space>
             </Col>
           </Row>

@@ -130,7 +130,7 @@ export default function SipocEditor({
             loading={saving}
             disabled={!hasChanges}
           >
-            Enregistrer
+            Enregistrer SIPOC
           </Button>
         </Space>
       </div>

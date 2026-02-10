@@ -1,4 +1,4 @@
-import { Collapse, Input, Tag, Typography } from "antd";
+import { Collapse, Input, Space, Switch, Tag, Typography } from "antd";
 import type { StakeholderLinkFields } from "../../../shared/types";
 
 /**
@@ -18,19 +18,29 @@ type Props = {
     field: keyof StakeholderLinkFields,
     value: string | null
   ) => void;
+  showAdvanced: boolean;
+  onShowAdvancedChange: (value: boolean) => void;
 };
 
 /**
  * Éditeur des détails par partie intéressée (besoins, attentes, SWOT, etc.)
  */
-export function StakeholderLinksEditor({ links, onUpdateField }: Props) {
+export function StakeholderLinksEditor({ links, onUpdateField, showAdvanced, onShowAdvancedChange }: Props) {
   if (links.length === 0) return null;
 
   return (
     <div style={{ marginBottom: 24 }}>
-      <Typography.Text strong style={{ display: "block", marginBottom: 8 }}>
-        Détails par partie intéressée
-      </Typography.Text>
+      <Space style={{ width: "100%", justifyContent: "space-between", marginBottom: 8 }}>
+        <Typography.Text strong>
+          Détails par partie intéressée
+        </Typography.Text>
+        <Space size={8}>
+          <Typography.Text type="secondary" style={{ fontSize: 13 }}>
+            Afficher les champs avancés (vue utilisateur)
+          </Typography.Text>
+          <Switch size="small" checked={showAdvanced} onChange={onShowAdvancedChange} />
+        </Space>
+      </Space>
 
       <Collapse
         accordion
@@ -49,7 +59,7 @@ export function StakeholderLinksEditor({ links, onUpdateField }: Props) {
           children: (
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
               <div>
-                <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                <Typography.Text type="secondary" style={{ fontSize: 14 }}>
                   Besoins
                 </Typography.Text>
                 <Input.TextArea
@@ -61,7 +71,7 @@ export function StakeholderLinksEditor({ links, onUpdateField }: Props) {
               </div>
 
               <div>
-                <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                <Typography.Text type="secondary" style={{ fontSize: 14 }}>
                   Attentes
                 </Typography.Text>
                 <Input.TextArea
@@ -73,7 +83,7 @@ export function StakeholderLinksEditor({ links, onUpdateField }: Props) {
               </div>
 
               <div>
-                <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                <Typography.Text type="secondary" style={{ fontSize: 14 }}>
                   Éléments d'évaluation
                 </Typography.Text>
                 <Input.TextArea
@@ -87,7 +97,7 @@ export function StakeholderLinksEditor({ links, onUpdateField }: Props) {
               </div>
 
               <div>
-                <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                <Typography.Text type="secondary" style={{ fontSize: 14 }}>
                   Exigences
                 </Typography.Text>
                 <Input.TextArea
@@ -98,67 +108,71 @@ export function StakeholderLinksEditor({ links, onUpdateField }: Props) {
                 />
               </div>
 
-              <div>
-                <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-                  Forces
-                </Typography.Text>
-                <Input.TextArea
-                  rows={2}
-                  value={link.strengths ?? ""}
-                  onChange={(e) => onUpdateField(link.stakeholderId, "strengths", e.target.value)}
-                  placeholder="Forces..."
-                />
-              </div>
+              {showAdvanced && (
+                <>
+                  <div>
+                    <Typography.Text type="secondary" style={{ fontSize: 14 }}>
+                      Forces
+                    </Typography.Text>
+                    <Input.TextArea
+                      rows={2}
+                      value={link.strengths ?? ""}
+                      onChange={(e) => onUpdateField(link.stakeholderId, "strengths", e.target.value)}
+                      placeholder="Forces..."
+                    />
+                  </div>
 
-              <div>
-                <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-                  Faiblesses
-                </Typography.Text>
-                <Input.TextArea
-                  rows={2}
-                  value={link.weaknesses ?? ""}
-                  onChange={(e) => onUpdateField(link.stakeholderId, "weaknesses", e.target.value)}
-                  placeholder="Faiblesses..."
-                />
-              </div>
+                  <div>
+                    <Typography.Text type="secondary" style={{ fontSize: 14 }}>
+                      Faiblesses
+                    </Typography.Text>
+                    <Input.TextArea
+                      rows={2}
+                      value={link.weaknesses ?? ""}
+                      onChange={(e) => onUpdateField(link.stakeholderId, "weaknesses", e.target.value)}
+                      placeholder="Faiblesses..."
+                    />
+                  </div>
 
-              <div>
-                <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-                  Opportunités
-                </Typography.Text>
-                <Input.TextArea
-                  rows={2}
-                  value={link.opportunities ?? ""}
-                  onChange={(e) =>
-                    onUpdateField(link.stakeholderId, "opportunities", e.target.value)
-                  }
-                  placeholder="Opportunités..."
-                />
-              </div>
+                  <div>
+                    <Typography.Text type="secondary" style={{ fontSize: 14 }}>
+                      Opportunités
+                    </Typography.Text>
+                    <Input.TextArea
+                      rows={2}
+                      value={link.opportunities ?? ""}
+                      onChange={(e) =>
+                        onUpdateField(link.stakeholderId, "opportunities", e.target.value)
+                      }
+                      placeholder="Opportunités..."
+                    />
+                  </div>
 
-              <div>
-                <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-                  Risques
-                </Typography.Text>
-                <Input.TextArea
-                  rows={2}
-                  value={link.risks ?? ""}
-                  onChange={(e) => onUpdateField(link.stakeholderId, "risks", e.target.value)}
-                  placeholder="Risques..."
-                />
-              </div>
+                  <div>
+                    <Typography.Text type="secondary" style={{ fontSize: 14 }}>
+                      Risques
+                    </Typography.Text>
+                    <Input.TextArea
+                      rows={2}
+                      value={link.risks ?? ""}
+                      onChange={(e) => onUpdateField(link.stakeholderId, "risks", e.target.value)}
+                      placeholder="Risques..."
+                    />
+                  </div>
 
-              <div style={{ gridColumn: "1 / -1" }}>
-                <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-                  Plan d'actions
-                </Typography.Text>
-                <Input.TextArea
-                  rows={3}
-                  value={link.actionPlan ?? ""}
-                  onChange={(e) => onUpdateField(link.stakeholderId, "actionPlan", e.target.value)}
-                  placeholder="Plan d'actions..."
-                />
-              </div>
+                  <div style={{ gridColumn: "1 / -1" }}>
+                    <Typography.Text type="secondary" style={{ fontSize: 14 }}>
+                      Plan d'actions
+                    </Typography.Text>
+                    <Input.TextArea
+                      rows={3}
+                      value={link.actionPlan ?? ""}
+                      onChange={(e) => onUpdateField(link.stakeholderId, "actionPlan", e.target.value)}
+                      placeholder="Plan d'actions..."
+                    />
+                  </div>
+                </>
+              )}
             </div>
           ),
         }))}

@@ -51,16 +51,28 @@ export type ProcessLite = {
   orderInParent: number;
   isActive: boolean;
   processType?: ProcessType | null;
+  color?: string | null;
 
   // Cartography (racines)
   cartographySlot?: CartographySlot | null;
   cartographyOrder?: number | null;
 };
 
+export type CartographyItem = {
+  id: string;
+  slotKey: CartographySlot;
+  slotOrder: number;
+  label: string | null;
+  process: { id: string; code: string; name: string; color: string | null };
+};
+
 export type CartographyDTO = {
-  manager: ProcessLite | null;
-  valueChain: ProcessLite[];
-  roots?: ProcessLite[]; // optionnel si tu le gardes dans l’API
+  manager: CartographyItem | null;
+  valueChain: CartographyItem[];
+  leftPanel: CartographyItem[];
+  rightPanel: CartographyItem[];
+  leftBox: CartographyItem[];
+  rightBox: CartographyItem[];
 };
 
 export type PilotRef = {
@@ -73,6 +85,7 @@ export type ProcessFull = ProcessLite & {
   parentProcessId: string | null;
   objectives?: string;
   objectivesBlocks?: ObjectiveBlock[];
+  showAdvancedStakeholders?: boolean;
   stakeholders?: ProcessStakeholder[];
   stakeholderIds?: string[];
   pilotIds?: string[];

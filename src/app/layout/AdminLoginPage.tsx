@@ -9,7 +9,7 @@ export default function AdminLoginPage() {
   async function onFinish(values: any) {
     try {
       await login(values.email, values.password);
-      nav("/admin/processes");
+      nav("/admin/cartographie");
     } catch (e: any) {
       message.error(e.message || "Connexion impossible");
     }

@@ -115,7 +115,7 @@
    Column widths (fixed layout)
 ------------------------------ */
 
-.sipoc-col-fournisseur { width: 14%; }
+.sipoc-col-fournisseur { width: 18%; }
 .sipoc-col-entrees     { width: 12%; }
 .sipoc-col-numero      { width: 6%;  text-align: center; }
 .sipoc-col-ressources  { width: 14%; }

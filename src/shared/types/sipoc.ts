@@ -12,7 +12,7 @@ export type SipocRow = {
   ref?: string;
   phase?: string;
   numero?: string | number;
-  processusFournisseur?: string;
+  processusFournisseur?: string | string[];
   entrees?: string;
   ressources?: string;
   // RACI fields (admin mode)
@@ -22,13 +22,13 @@ export type SipocRow = {
   raciI?: string;
   designation?: Designation;
   sorties?: string;
-  processusClient?: string;
+  processusClient?: string | string[];
 
   // Nouveau format
   designationProcessus?: Designation;
   activitePhase?: Designation;
   sortiesProcessus?: string;
-  designationProcessusClient?: string;
+  designationProcessusClient?: string | string[];
   sortiesProcessusClient?: string;
 };
 

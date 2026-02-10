@@ -15,7 +15,12 @@ function processBadgeFromCode(code: string) {
   return `PR-${code}-01`;
 }
 
-export default function ProcessPreview({ data }: { data: ProcessFull | null }) {
+type ProcessPreviewProps = {
+  data: ProcessFull | null;
+  processList?: { id: string; name: string; code: string; processType?: string | null; parentProcessId?: string | null }[];
+};
+
+export default function ProcessPreview({ data, processList }: ProcessPreviewProps) {
   const [sipocOpen, setSipocOpen] = useState(false);
   const [sipocFocusRef, setSipocFocusRef] = useState<string | null>(null);
 
@@ -159,6 +164,7 @@ export default function ProcessPreview({ data }: { data: ProcessFull | null }) {
                 rows={data.sipoc.rows}
                 phases={(data.sipoc as any)?.phases}
                 focusRef={sipocFocusRef}
+                processList={processList}
               />
             </div>
           ) : (

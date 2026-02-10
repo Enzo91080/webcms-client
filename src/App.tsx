@@ -9,6 +9,7 @@ import ProcessPage from "./features/processes/pages/ProcessPage";
 import AdminStakeholdersPage from "./features/stakeholders/pages/AdminListStakeholderPage";
 import AdminPilotsPage from "./features/pilots/pages/AdminListPilotPage";
 import AdminSipocPage from "./features/sipoc/pages/AdminSipocPage";
+import AdminCartographyPage from "./features/cartography/pages/AdminCartographyPage";
 import antdConfig from "./antConfig";
 
 // Ant Design default font (text): Open Sans
@@ -24,11 +25,11 @@ export default function App() {
         <Route path="/admin/login" element={<AdminLoginPage />} />
         <Route element={<RequireAdmin />}>
           <Route path="/admin" element={<AdminLayout />}>
+            <Route path="cartographie" element={<AdminCartographyPage />} />
             <Route path="processes" element={<AdminProcessesPage />} />
             <Route path="partie-interressees" element={<AdminStakeholdersPage />} />
             <Route path="pilotes" element={<AdminPilotsPage />} />
             <Route path="sipoc" element={<AdminSipocPage />} />
-            <Route path="raci" element={<div>RACI Page (à implémenter)</div>} />
           </Route>
         </Route>
       </Routes>

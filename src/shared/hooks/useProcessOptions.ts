@@ -8,6 +8,8 @@ export type ProcessOption = {
   code: string;
   name: string;
   processType?: string | null;
+  parentProcessId?: string | null;
+  color?: string | null;
 };
 
 type SelectOption = {
@@ -45,6 +47,8 @@ export function useProcessOptions(): UseProcessOptionsResult {
         code: p.code,
         name: p.name,
         processType: p.processType || null,
+        parentProcessId: p.parentProcessId || null,
+        color: p.color || null,
       }));
       setProcesses(list);
     } catch (e) {
