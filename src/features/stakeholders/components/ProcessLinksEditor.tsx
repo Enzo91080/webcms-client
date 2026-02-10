@@ -127,13 +127,13 @@ export function ProcessLinksEditor({ links, onUpdateField }: Props) {
 
               <div>
                 <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-                  Risques
+                  Menaces
                 </Typography.Text>
                 <Input.TextArea
                   rows={2}
                   value={link.risks ?? ""}
                   onChange={(e) => onUpdateField(link.processId, "risks", e.target.value)}
-                  placeholder="Risques..."
+                  placeholder="Menaces..."
                 />
               </div>
 

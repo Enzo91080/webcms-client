@@ -59,7 +59,7 @@ export function StakeholderLinksEditor({ links, onUpdateField, showAdvanced, onS
           children: (
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
               <div>
-                <Typography.Text type="secondary" style={{ fontSize: 14 }}>
+                <Typography.Text type="secondary" style={{ fontSize: 14, fontWeight: "800", color: "#0069c8" }}>
                   Besoins
                 </Typography.Text>
                 <Input.TextArea
@@ -71,7 +71,7 @@ export function StakeholderLinksEditor({ links, onUpdateField, showAdvanced, onS
               </div>
 
               <div>
-                <Typography.Text type="secondary" style={{ fontSize: 14 }}>
+                <Typography.Text type="secondary" style={{ fontSize: 14, fontWeight: "800", color: "#0069c8" }}>
                   Attentes
                 </Typography.Text>
                 <Input.TextArea
@@ -83,7 +83,7 @@ export function StakeholderLinksEditor({ links, onUpdateField, showAdvanced, onS
               </div>
 
               <div>
-                <Typography.Text type="secondary" style={{ fontSize: 14 }}>
+                <Typography.Text type="secondary" style={{ fontSize: 14, fontWeight: "800", color: "#0069c8" }}>
                   Éléments d'évaluation
                 </Typography.Text>
                 <Input.TextArea
@@ -97,7 +97,7 @@ export function StakeholderLinksEditor({ links, onUpdateField, showAdvanced, onS
               </div>
 
               <div>
-                <Typography.Text type="secondary" style={{ fontSize: 14 }}>
+                <Typography.Text type="secondary" style={{ fontSize: 14, fontWeight: "800", color: "#0069c8" }}>
                   Exigences
                 </Typography.Text>
                 <Input.TextArea
@@ -111,7 +111,7 @@ export function StakeholderLinksEditor({ links, onUpdateField, showAdvanced, onS
               {showAdvanced && (
                 <>
                   <div>
-                    <Typography.Text type="secondary" style={{ fontSize: 14 }}>
+                    <Typography.Text type="secondary" style={{ fontSize: 14 }}>, fontWeight: "800", color: "#0069c8"
                       Forces
                     </Typography.Text>
                     <Input.TextArea
@@ -123,7 +123,7 @@ export function StakeholderLinksEditor({ links, onUpdateField, showAdvanced, onS
                   </div>
 
                   <div>
-                    <Typography.Text type="secondary" style={{ fontSize: 14 }}>
+                    <Typography.Text type="secondary" style={{ fontSize: 14 }}>, fontWeight: "800", color: "#0069c8"
                       Faiblesses
                     </Typography.Text>
                     <Input.TextArea
@@ -135,7 +135,7 @@ export function StakeholderLinksEditor({ links, onUpdateField, showAdvanced, onS
                   </div>
 
                   <div>
-                    <Typography.Text type="secondary" style={{ fontSize: 14 }}>
+                    <Typography.Text type="secondary" style={{ fontSize: 14 }}>, fontWeight: "800", color: "#0069c8"
                       Opportunités
                     </Typography.Text>
                     <Input.TextArea
@@ -149,19 +149,19 @@ export function StakeholderLinksEditor({ links, onUpdateField, showAdvanced, onS
                   </div>
 
                   <div>
-                    <Typography.Text type="secondary" style={{ fontSize: 14 }}>
-                      Risques
+                    <Typography.Text type="secondary" style={{ fontSize: 14 }}>, fontWeight: "800", color: "#0069c8"
+                      Menaces
                     </Typography.Text>
                     <Input.TextArea
                       rows={2}
                       value={link.risks ?? ""}
                       onChange={(e) => onUpdateField(link.stakeholderId, "risks", e.target.value)}
-                      placeholder="Risques..."
+                      placeholder="Menaces..."
                     />
                   </div>
 
                   <div style={{ gridColumn: "1 / -1" }}>
-                    <Typography.Text type="secondary" style={{ fontSize: 14 }}>
+                    <Typography.Text type="secondary" style={{ fontSize: 14 }}>, fontWeight: "800", color: "#0069c8"
                       Plan d'actions
                     </Typography.Text>
                     <Input.TextArea

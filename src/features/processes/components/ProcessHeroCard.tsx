@@ -73,7 +73,7 @@ export function ProcessHeroCard({
           { title: "Forces", dataIndex: ["link", "strengths"], key: "strengths", render: renderCell },
           { title: "Faiblesses", dataIndex: ["link", "weaknesses"], key: "weaknesses", render: renderCell },
           { title: "Opportunités", dataIndex: ["link", "opportunities"], key: "opportunities", render: renderCell },
-          { title: "Risques", dataIndex: ["link", "risks"], key: "risks", render: renderCell },
+          { title: "Menaces", dataIndex: ["link", "risks"], key: "risks", render: renderCell },
           { title: "Plan d'actions", dataIndex: ["link", "actionPlan"], key: "actionPlan", render: renderCell },
         ]
       : []),
