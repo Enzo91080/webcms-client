@@ -26,6 +26,8 @@ export {
 
 // Stakeholders API
 export {
+  getStakeholders,
+  type StakeholderLite,
   adminListStakeholders,
   adminCreateStakeholder,
   adminPatchStakeholder,
@@ -57,5 +59,9 @@ export {
 export {
   adminGetCartography,
   adminSaveCartography,
+  adminGetPanelStakeholders,
+  adminSavePanelStakeholders,
   type CartographyLayoutInput,
+  type PanelStakeholderInput,
+  type PanelConfig,
 } from "./cartography.api";

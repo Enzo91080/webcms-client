@@ -1,4 +1,4 @@
-import { Alert, Spin } from "antd";
+import { Alert, Card, Spin } from "antd";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getCartography } from "../../../shared/api";
@@ -37,9 +37,9 @@ export default function CartographyPage() {
     let alive = true;
 
     getCartography()
-      .then((r) => {
+      .then((res) => {
         if (!alive) return;
-        setCarto(r.data);
+        setCarto(res.data);
 
         requestAnimationFrame(() => {
           if (!alive) return;
@@ -74,10 +74,6 @@ export default function CartographyPage() {
 
   const valueChain = carto.valueChain ?? [];
   const manager = carto.manager;
-  const leftPanel = carto.leftPanel ?? [];
-  const rightPanel = carto.rightPanel ?? [];
-  const leftBox = carto.leftBox ?? [];
-  const rightBox = carto.rightBox ?? [];
   const vcCount = valueChain.length;
 
   return (
@@ -90,22 +86,39 @@ export default function CartographyPage() {
           style={{ ["--vc-count" as any]: vcCount }}
         >
           <div className="sidePanel sidePanelLeft">
-            <div className="sidePanelText">
-              {leftPanel.length > 0 ? displayName(leftPanel[0]) : "Support"}
-            </div>
+            <Card
+              size="small"
+              title="Besoins Parties Intéressées"
+              className="sidePanelCard"
+            >
+              {carto.leftStakeholders.length > 0 ? (
+                <ul className="sidePanelList">
+                  {carto.leftStakeholders.map((s) => (
+                    <li key={s.id}>{s.name}</li>
+                  ))}
+                </ul>
+              ) : (
+                <span className="sidePanelEmpty">Aucune partie intéressée</span>
+              )}
+            </Card>
           </div>
 
           <div className="sidePanel sidePanelRight">
-            <div className="sidePanelText">
-              {rightPanel.length > 0 ? displayName(rightPanel[0]) : "Pilotage"}
-            </div>
-          </div>
-
-          <div className="smallBox smallBoxLeft">
-            {leftBox.length > 0 ? displayName(leftBox[0]) : ""}
-          </div>
-          <div className="smallBox smallBoxRight">
-            {rightBox.length > 0 ? displayName(rightBox[0]) : ""}
+            <Card
+              size="small"
+              title="Satisfaction Parties Intéressées"
+              className="sidePanelCard"
+            >
+              {carto.rightStakeholders.length > 0 ? (
+                <ul className="sidePanelList">
+                  {carto.rightStakeholders.map((s) => (
+                    <li key={s.id}>{s.name}</li>
+                  ))}
+                </ul>
+              ) : (
+                <span className="sidePanelEmpty">Aucune partie intéressée</span>
+              )}
+            </Card>
           </div>
 
           <div className="chainOuter">
@@ -141,17 +154,14 @@ export default function CartographyPage() {
                 return (
                   <Link
                     key={item.id}
-                    className={`processTile ${shape} vcTile`}
+                    className={`processTile ${shape}`}
                     to={`/process/${item.process.code}`}
                     aria-label={`Ouvrir ${displayName(item)}`}
-                    style={
-                      bgColor
-                        ? {
-                            background: `radial-gradient(180px 90px at 30% 20%, rgba(255,255,255,.45), transparent 55%), ${bgColor}`,
-                            color: textColor,
-                          }
-                        : undefined
-                    }
+                    style={{
+                      ["--tile-bg" as string]: bgColor || undefined,
+                      color: bgColor ? textColor : undefined,
+                      zIndex: valueChain.length - idx,
+                    }}
                   >
                     <span className="tileText">{displayName(item)}</span>
                   </Link>

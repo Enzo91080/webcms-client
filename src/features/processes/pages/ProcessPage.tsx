@@ -7,6 +7,7 @@ import {
 import {
   Alert,
   Avatar,
+  Breadcrumb,
   Button,
   Card,
   Col,
@@ -15,9 +16,11 @@ import {
   Row,
   Space,
   Spin,
+  Steps,
   Tag,
   Typography,
 } from "antd";
+import { HomeOutlined } from "@ant-design/icons";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
@@ -28,6 +31,15 @@ import { ProcessHeroCard, ProcessLegend } from "../components";
 import { getCartography, getPath, getProcessByCode, getProcessListLite } from "../../../shared/api";
 import type { ProcessFull, ProcessLite, PathItem, ProcessStakeholder } from "../../../shared/types";
 import { getErrorMessage, normalizeDocs, normalizeObjectives } from "../../../shared/utils";
+
+function getContrastText(hex: string | null | undefined): string {
+  if (!hex || !/^#[0-9a-fA-F]{6}$/.test(hex)) return "#0b1220";
+  const r = parseInt(hex.slice(1, 3), 16) / 255;
+  const g = parseInt(hex.slice(3, 5), 16) / 255;
+  const b = parseInt(hex.slice(5, 7), 16) / 255;
+  const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  return lum > 0.5 ? "#0b1220" : "#ffffff";
+}
 
 function processBadgeFromCode(code: string) {
   return `PR-${code}-01`;
@@ -83,6 +95,7 @@ export default function ProcessPage() {
           const cartoData = await getCartography().then((r) => r.data);
           if (!alive) return;
           const allItems = [
+            ...(cartoData.manager ? [cartoData.manager] : []),
             ...(cartoData.valueChain ?? []),
             ...(cartoData.leftPanel ?? []),
             ...(cartoData.rightPanel ?? []),
@@ -94,6 +107,7 @@ export default function ProcessPage() {
             parentProcessId: null,
             orderInParent: item.slotOrder,
             isActive: true,
+            color: item.process.color ?? null,
           })));
           return;
         }
@@ -123,15 +137,36 @@ export default function ProcessPage() {
   useEffect(() => {
     getProcessListLite()
       .then((res) => setSipocProcessList(res.data))
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
-  // Derived data
-  const breadcrumb = useMemo(() => {
-    if (!process) return "";
-    const rootName = path?.[0]?.name || process.name;
-    return `${rootName} › Général › Processus ${process.name}`;
+  // Breadcrumb items from path hierarchy
+  const breadcrumbItems = useMemo(() => {
+    const items: { title: React.ReactNode; href?: string }[] = [
+      { title: <><HomeOutlined /> Cartographie</>, href: "/" },
+    ];
+    if (path.length > 0) {
+      // All path items except the last (current) are clickable
+      for (let i = 0; i < path.length - 1; i++) {
+        items.push({
+          title: path[i].name,
+          href: `/process/${path[i].code}`,
+        });
+      }
+    }
+    if (process) {
+      items.push({ title: process.name });
+    }
+    return items;
   }, [process, path]);
+
+  // Steps: all siblings, current highlighted
+  const stepsData = useMemo(() => {
+    if (!process || siblings.length < 2) return null;
+    const idx = siblings.findIndex((s) => s.code === process.code);
+    if (idx < 0) return null;
+    return { current: idx, items: siblings };
+  }, [process, siblings]);
 
   const canNav = siblings.length >= 2;
 
@@ -255,15 +290,38 @@ export default function ProcessPage() {
           opacity: isTransitioning ? 0 : 1,
         }}
       >
-        {/* Back link + breadcrumb */}
-        <Space style={{ width: "100%", justifyContent: "space-between", marginBottom: 16 }}>
-          <Button type="text" icon={<ArrowLeftOutlined />} href="/" style={{ padding: "4px 12px" }}>
+        {/* Navigation bar: Breadcrumb (left) + Steps (right) */}
+        <div style={{ marginBottom: 16 }}>
+          <Button
+            type="text"
+            icon={<ArrowLeftOutlined />}
+            href="/"
+            style={{ padding: "4px 12px", marginBottom: 8 }}
+          >
             Retour à la cartographie
           </Button>
-          <Typography.Text type="secondary" style={{ fontSize: 13 }}>
-            {breadcrumb}
-          </Typography.Text>
-        </Space>
+          <div className="flex items-center justify-between flex-wrap gap-2"
+          >
+            <Breadcrumb items={breadcrumbItems} style={{ fontSize: 13 }} />
+            {stepsData && (
+              <Steps
+                size="small"
+                type="inline"
+                current={stepsData.current}
+                style={{ maxWidth: 600, flex: "0 1 auto" }}
+                onChange={(idx) => {
+                  if (idx === stepsData.current) return;
+                  const target = stepsData.items[idx];
+                  if (target) navigate(`/process/${target.code}`);
+                }}
+                items={stepsData.items.map((s, i) => ({
+                  title: s.name,
+                  disabled: i === stepsData.current,
+                }))}
+              />
+            )}
+          </div>
+        </div>
 
         {/* Hero card */}
         <ProcessHeroCard

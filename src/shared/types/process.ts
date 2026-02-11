@@ -71,8 +71,8 @@ export type CartographyDTO = {
   valueChain: CartographyItem[];
   leftPanel: CartographyItem[];
   rightPanel: CartographyItem[];
-  leftBox: CartographyItem[];
-  rightBox: CartographyItem[];
+  leftStakeholders: { id: string; name: string }[];
+  rightStakeholders: { id: string; name: string }[];
 };
 
 export type PilotRef = {

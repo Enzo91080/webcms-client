@@ -1,6 +1,16 @@
 import { request } from "./client";
 import type { StakeholderLinkFields } from "../types";
 
+// ── Public ──────────────────────────────────────────
+
+export type StakeholderLite = { id: string; name: string };
+
+export async function getStakeholders() {
+  return request<{ data: StakeholderLite[] }>("/api/stakeholders");
+}
+
+// ── Types ───────────────────────────────────────────
+
 export type ProcessRef = {
   id: string;
   code: string;

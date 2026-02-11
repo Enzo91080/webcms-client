@@ -2,9 +2,9 @@
 
 :root {
   --carto-text: #0b1220;
-  --carto-shadow-soft: 0 10px 30px rgba(0,0,0,.10);
-  --ease-out: cubic-bezier(.2,.9,.2,1);
-  --ease-spring: cubic-bezier(.15,.95,.2,1.05);
+  --carto-shadow-soft: 0 10px 30px rgba(0, 0, 0, .10);
+  --ease-out: cubic-bezier(.2, .9, .2, 1);
+  --ease-spring: cubic-bezier(.15, .95, .2, 1.05);
 }
 
 /* Layout */
@@ -28,73 +28,121 @@
   height: 520px;
 }
 
-@media (max-width: 1100px) { .cartoStage { height: 560px; } }
-@media (max-width: 900px)  { .cartoStage { height: 620px; } }
+@media (max-width: 1100px) {
+  .cartoStage {
+    height: 560px;
+  }
+}
+
+@media (max-width: 900px) {
+  .cartoStage {
+    height: 620px;
+  }
+}
 
 /* Side panels */
 
 .sidePanel {
-  @apply absolute top-[80px] w-[240px] h-[360px] rounded-[18px] grid place-items-center;
-  border: 1px solid rgba(255,255,255,.55);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  overflow: hidden;
+  @apply absolute top-[26px] bottom-[26px] w-[210px];
+  display: flex;
+  align-items: stretch;
 }
 
-@media (max-width: 1100px) { .sidePanel { width: 200px; } }
-@media (max-width: 900px)  { .sidePanel { display: none; } }
+@media (max-width: 1100px) {
+  .sidePanel {
+    width: 180px;
+  }
+}
+
+@media (max-width: 900px) {
+  .sidePanel {
+    display: none;
+  }
+}
 
 .sidePanelLeft {
   @apply left-[10px];
-  background: linear-gradient(180deg, rgba(217,234,248,.92), rgba(217,234,248,.62));
 }
 
 .sidePanelRight {
   @apply right-[10px];
-  background: linear-gradient(180deg, rgba(247,211,211,.92), rgba(247,211,211,.62));
 }
 
-.sidePanelText {
-  writing-mode: vertical-rl;
-  transform: rotate(180deg);
-  @apply font-extrabold tracking-[3px] uppercase;
-  color: rgba(2,6,23,.75);
-  user-select: none;
+/* AntD Card override inside panels */
+.sidePanelCard {
+  width: 100%;
+  height: 100%;
+  border-radius: 14px !important;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
-/* Small boxes */
-
-.smallBox {
-  @apply absolute bottom-[22px] w-[170px] rounded-[14px] p-[12px_14px];
-  background: rgba(255,255,255,.72);
-  border: 1px solid rgba(255,255,255,.55);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  box-shadow: var(--carto-shadow-soft);
-  color: rgba(2,6,23,.78);
+.sidePanelCard .ant-card-head {
+  background: #1e40af;
+  color: #fff;
+  min-height: auto;
+  padding: 10px 14px;
+  border-bottom: none;
 }
 
-.smallBoxLeft  { @apply left-[38px]; }
-.smallBoxRight { @apply right-[38px]; }
+.sidePanelCard .ant-card-head-title {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  white-space: normal;
+  color: #fff;
+}
 
-@media (max-width: 900px) { .smallBox { display: none; } }
+.sidePanelRight .sidePanelCard .ant-card-head {
+  background: #b91c1c;
+}
+
+.sidePanelCard .ant-card-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, .85);
+}
+
+.sidePanelList {
+  @apply list-disc pl-4 m-0 text-[12px] leading-[1.6];
+  color: rgba(2, 6, 23, .75);
+}
+
+.sidePanelEmpty {
+  @apply text-[12px] italic;
+  color: rgba(2, 6, 23, .4);
+}
 
 /* Chain outer */
 
 .chainOuter {
-  @apply absolute top-[94px] left-1/2 -translate-x-1/2 h-[300px] rounded-[170px] box-border;
-  @apply px-[56px] pt-[52px] pb-[42px];
-  width: min(820px, calc(100% - 520px));
-  border: 2px solid rgba(16,184,81,.50);
+  @apply absolute top-[60px] left-1/2 -translate-x-1/2 rounded-[500px] box-border;
+  @apply px-[40px] pt-[52px] pb-[32px];
+  bottom: 26px;
+  width: min(820px, calc(100% - 460px));
+  border: 5px solid rgba(16, 184, 81, .40);
   background:
-    radial-gradient(700px 280px at 50% 30%, rgba(255,255,255,.70), rgba(255,255,255,.32)),
-    linear-gradient(180deg, rgba(255,255,255,.55), rgba(255,255,255,.30));
+    radial-gradient(700px 280px at 50% 30%, rgba(255, 255, 255, .70), rgba(255, 255, 255, .32)),
+    linear-gradient(180deg, rgba(255, 255, 255, .55), rgba(255, 255, 255, .30));
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+  display: flex;
+  flex-direction: column;
 }
 
-@media (max-width: 1100px) { .chainOuter { width: min(760px, calc(100% - 440px)); } }
-@media (max-width: 900px)  { .chainOuter { width: min(820px, 100%); } }
+@media (max-width: 1100px) {
+  .chainOuter {
+    width: min(760px, calc(100% - 400px));
+  }
+}
+
+@media (max-width: 900px) {
+  .chainOuter {
+    width: min(820px, 100%);
+  }
+}
 
 /* Manager pill */
 
@@ -111,8 +159,8 @@
       color-mix(in srgb, var(--pill-bg), black 18%) 100%);
   box-shadow:
     0 18px 36px color-mix(in srgb, var(--pill-bg), transparent 78%),
-    0 10px 18px rgba(0,0,0,.10);
-  border: 1px solid rgba(255,255,255,.35);
+    0 10px 18px rgba(0, 0, 0, .10);
+  border: 1px solid rgba(255, 255, 255, .35);
   position: absolute;
   transition: transform .18s ease, filter .18s ease, box-shadow .18s ease;
 }
@@ -122,7 +170,7 @@
   filter: brightness(1.05);
   box-shadow:
     0 24px 46px color-mix(in srgb, var(--pill-bg), transparent 74%),
-    0 14px 22px rgba(0,0,0,.12);
+    0 14px 22px rgba(0, 0, 0, .12);
 }
 
 .managerPill:active {
@@ -132,15 +180,15 @@
 .managerPill:focus-visible {
   outline: none;
   box-shadow:
-    0 0 0 5px rgba(47,99,204,.18),
+    0 0 0 5px rgba(47, 99, 204, .18),
     0 18px 36px color-mix(in srgb, var(--pill-bg), transparent 78%),
-    0 10px 18px rgba(0,0,0,.10);
+    0 10px 18px rgba(0, 0, 0, .10);
 }
 
 .managerPillDisabled {
   @apply cursor-default opacity-80;
-  background: linear-gradient(135deg, rgba(148,163,184,1), rgba(100,116,139,1));
-  box-shadow: 0 12px 22px rgba(0,0,0,.10);
+  background: linear-gradient(135deg, rgba(148, 163, 184, 1), rgba(100, 116, 139, 1));
+  box-shadow: 0 12px 22px rgba(0, 0, 0, .10);
 }
 
 /* Title bar */
@@ -148,138 +196,248 @@
 .titleBar {
   @apply mx-auto rounded-[14px] px-[16px] py-[12px] text-center font-extrabold uppercase tracking-[2.5px];
   width: min(560px, 100%);
-  color: rgba(255,255,255,.96);
+  color: rgba(255, 255, 255, .96);
   background: linear-gradient(135deg, #2f63cc 0%, #3b82f6 45%, #1e40af 100%);
-  border: 1px solid rgba(255,255,255,.28);
-  box-shadow: 0 18px 36px rgba(47,99,204,.20), 0 10px 18px rgba(0,0,0,.10);
+  border: 1px solid rgba(255, 255, 255, .28);
+  box-shadow: 0 18px 36px rgba(47, 99, 204, .20), 0 10px 18px rgba(0, 0, 0, .10);
 }
 
 /* Tiles */
 
 .tilesRow {
-  @apply mt-[26px] flex flex-nowrap justify-center gap-[16px];
-  perspective: 900px;
+  @apply flex flex-nowrap items-center justify-center;
+  margin: auto 0;
 }
 
 .processTile {
-  @apply grid place-items-center h-[72px] w-[120px] rounded-[12px] no-underline;
-  @apply font-extrabold;
-  transition: transform .25s var(--ease-spring), box-shadow .25s ease, filter .25s ease;
+  --tile-bg: #cbd5e1;
+  @apply grid place-items-center h-[72px] no-underline font-extrabold;
+  flex: 1 1 0;
+  min-width: 0;
+  background: var(--tile-bg);
   color: var(--carto-text);
-  border: 1px solid rgba(255,255,255,.50);
-  box-shadow: 0 14px 28px rgba(0,0,0,.10), inset 0 1px 0 rgba(255,255,255,.55);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
   position: relative;
-  overflow: hidden;
+  margin: 0 1px;
+}
+
+/* Arrow pointer – colored triangle extending to the right */
+.processTile::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 100%;
+  border-left: 22px solid var(--tile-bg);
+  border-top: 36px solid transparent;
+  border-bottom: 36px solid transparent;
+  z-index: 20;
+}
+
+/* Notch – background-colored triangle on the left (interlocking cut) */
+.tileMid::before,
+.tileLast::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-left: 20px solid rgba(255, 255, 255, .85);
+  border-top: 36px solid transparent;
+  border-bottom: 36px solid transparent;
 }
 
 .processTile:hover {
-  transform: translateY(-6px) scale(1.04);
-  box-shadow: 0 22px 44px rgba(0,0,0,.18), inset 0 1px 0 rgba(255,255,255,.65);
   filter: brightness(1.08);
 }
 
 .processTile:active {
-  transform: translateY(-2px) scale(.98);
-  filter: brightness(.97);
+  filter: brightness(.96);
 }
 
 .processTile:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 5px rgba(47,99,204,.18), 0 22px 44px rgba(0,0,0,.14);
+  filter: brightness(1.12);
 }
 
 .tileText {
-  @apply text-center px-[10px] leading-[1.10];
-  text-shadow: 0 1px 0 rgba(255,255,255,.25);
-  font-size: 14px;
+  @apply text-center leading-[1.10];
+  text-shadow: 0 1px 0 rgba(255, 255, 255, .25);
+  font-size: 13px;
+  position: relative;
+  z-index: 2;
 }
 
-/* Tile shapes (chevron clip-path) */
-
-.tileFirst { clip-path: polygon(0 0, 100% 0, 92% 100%, 0 100%); }
-.tileMid   { clip-path: polygon(8% 0, 100% 0, 92% 100%, 0 100%); }
-.tileLast  { clip-path: polygon(8% 0, 100% 0, 100% 100%, 0 100%); }
-
-/* Value chain tile fallback color */
-
-.vcTile {
-  background:
-    radial-gradient(180px 90px at 30% 20%, rgba(255,255,255,.55), transparent 55%),
-    linear-gradient(135deg, #e2e8f0, #cbd5e1);
+/* Extra left padding on tiles with notch so text doesn't overlap the triangle */
+.tileMid .tileText,
+.tileLast .tileText {
+  padding-left: 16px;
 }
 
 /* ── Entrance animations (triggered by .cartoAnim.isReady) ── */
 
-.cartoAnim:not(.isReady) > * { visibility: hidden; }
+.cartoAnim:not(.isReady)>* {
+  visibility: hidden;
+}
 
-.cartoAnim.isReady                    { animation: fadeUp 700ms var(--ease-out) both; }
-.cartoAnim.isReady .sidePanelLeft     { animation: slideLeft 780ms var(--ease-spring) 120ms both; }
-.cartoAnim.isReady .sidePanelRight    { animation: slideRight 780ms var(--ease-spring) 120ms both; }
-.cartoAnim.isReady .chainOuter        { animation: chainPop 820ms var(--ease-spring) 160ms both; }
-.cartoAnim.isReady .managerPill       { animation: pillDrop 680ms var(--ease-spring) 320ms both; }
-.cartoAnim.isReady .titleBar          { animation: fadeUp 640ms var(--ease-out) 380ms both; }
-.cartoAnim.isReady .smallBoxLeft,
-.cartoAnim.isReady .smallBoxRight     { animation: fadeUp 700ms var(--ease-spring) 420ms both; }
-.cartoAnim.isReady .processTile       { opacity: 0; animation: tileIn 700ms var(--ease-spring) both; }
+.cartoAnim.isReady {
+  animation: fadeUp 700ms var(--ease-out) both;
+}
+
+.cartoAnim.isReady .sidePanelLeft {
+  animation: slideLeft 780ms var(--ease-spring) 120ms both;
+}
+
+.cartoAnim.isReady .sidePanelRight {
+  animation: slideRight 780ms var(--ease-spring) 120ms both;
+}
+
+.cartoAnim.isReady .chainOuter {
+  animation: chainPop 820ms var(--ease-spring) 160ms both;
+}
+
+.cartoAnim.isReady .managerPill {
+  animation: pillDrop 680ms var(--ease-spring) 320ms both;
+}
+
+.cartoAnim.isReady .titleBar {
+  animation: fadeUp 640ms var(--ease-out) 380ms both;
+}
+
+.cartoAnim.isReady .processTile {
+  opacity: 0;
+  animation: tileIn 700ms var(--ease-spring) both;
+}
 
 @keyframes fadeUp {
-  from { opacity: 0; transform: translateY(12px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes slideLeft {
-  from { opacity: 0; transform: translateX(-14px); }
-  to   { opacity: 1; transform: translateX(0); }
+  from {
+    opacity: 0;
+    transform: translateX(-14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 @keyframes slideRight {
-  from { opacity: 0; transform: translateX(14px); }
-  to   { opacity: 1; transform: translateX(0); }
+  from {
+    opacity: 0;
+    transform: translateX(14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 @keyframes chainPop {
-  from { opacity: 0; transform: translateX(-50%) translateY(12px); }
-  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
 }
 
 @keyframes pillDrop {
-  from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
-  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
 }
 
 @keyframes tileIn {
-  from { opacity: 0; transform: translateY(12px) scale(.985); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(.985);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 /* Tile stagger delays */
 
-.cartoAnim.isReady .processTile:nth-child(1)  { animation-delay: 520ms; }
-.cartoAnim.isReady .processTile:nth-child(2)  { animation-delay: 600ms; }
-.cartoAnim.isReady .processTile:nth-child(3)  { animation-delay: 680ms; }
-.cartoAnim.isReady .processTile:nth-child(4)  { animation-delay: 760ms; }
-.cartoAnim.isReady .processTile:nth-child(5)  { animation-delay: 840ms; }
-.cartoAnim.isReady .processTile:nth-child(6)  { animation-delay: 920ms; }
-.cartoAnim.isReady .processTile:nth-child(7)  { animation-delay: 1000ms; }
-.cartoAnim.isReady .processTile:nth-child(8)  { animation-delay: 1080ms; }
-.cartoAnim.isReady .processTile:nth-child(9)  { animation-delay: 1160ms; }
-.cartoAnim.isReady .processTile:nth-child(10) { animation-delay: 1240ms; }
-.cartoAnim.isReady .processTile:nth-child(11) { animation-delay: 1320ms; }
-.cartoAnim.isReady .processTile:nth-child(12) { animation-delay: 1400ms; }
+.cartoAnim.isReady .processTile:nth-child(1) {
+  animation-delay: 520ms;
+}
+
+.cartoAnim.isReady .processTile:nth-child(2) {
+  animation-delay: 600ms;
+}
+
+.cartoAnim.isReady .processTile:nth-child(3) {
+  animation-delay: 680ms;
+}
+
+.cartoAnim.isReady .processTile:nth-child(4) {
+  animation-delay: 760ms;
+}
+
+.cartoAnim.isReady .processTile:nth-child(5) {
+  animation-delay: 840ms;
+}
+
+.cartoAnim.isReady .processTile:nth-child(6) {
+  animation-delay: 920ms;
+}
+
+.cartoAnim.isReady .processTile:nth-child(7) {
+  animation-delay: 1000ms;
+}
+
+.cartoAnim.isReady .processTile:nth-child(8) {
+  animation-delay: 1080ms;
+}
+
+.cartoAnim.isReady .processTile:nth-child(9) {
+  animation-delay: 1160ms;
+}
+
+.cartoAnim.isReady .processTile:nth-child(10) {
+  animation-delay: 1240ms;
+}
+
+.cartoAnim.isReady .processTile:nth-child(11) {
+  animation-delay: 1320ms;
+}
+
+.cartoAnim.isReady .processTile:nth-child(12) {
+  animation-delay: 1400ms;
+}
 
 /* Accessibility */
 
 @media (prefers-reduced-motion: reduce) {
+
   .cartoAnim.isReady,
   .cartoAnim.isReady .sidePanelLeft,
   .cartoAnim.isReady .sidePanelRight,
   .cartoAnim.isReady .chainOuter,
   .cartoAnim.isReady .managerPill,
   .cartoAnim.isReady .titleBar,
-  .cartoAnim.isReady .smallBoxLeft,
-  .cartoAnim.isReady .smallBoxRight,
   .cartoAnim.isReady .processTile {
     animation: none !important;
     transition: none !important;
