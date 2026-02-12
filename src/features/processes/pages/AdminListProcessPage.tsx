@@ -323,6 +323,7 @@ export default function AdminProcessesPage() {
         color: v.color || null,
         title: String(v.title || ""),
         objectivesBlocks: Array.isArray(v.objectivesBlocks) ? v.objectivesBlocks : [],
+        objectives: "",  // clear legacy field to prevent stale re-parsing
         referenceDocuments: Array.isArray(v.referenceDocuments) ? v.referenceDocuments : [],
         showAdvancedStakeholders,
       };

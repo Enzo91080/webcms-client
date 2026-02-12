@@ -3,6 +3,7 @@ import {
   FilePdfOutlined,
   FileTextOutlined,
   InfoCircleOutlined,
+  ProfileOutlined,
   TagOutlined,
   TeamOutlined,
   UserOutlined,
@@ -199,9 +200,9 @@ export function ProcessHeroCard({
       <div style={{ background: "white", padding: "24px 32px" }}>
         <Row gutter={24}>
           <Col xs={24} md={8}>
-            <Space direction="vertical" size={10} style={{ width: "100%" }}>
+            <Space direction="vertical"  style={{ width: "100%" }}>
               <Space align="center">
-                <InfoCircleOutlined style={{ color: antdConfig.token!.colorPrimary, fontSize: 18 }} />
+                <ProfileOutlined style={{ color: antdConfig.token!.colorPrimary, fontSize: 18 }} />
                 <Typography.Text style={{ color: antdConfig.token!.colorPrimary, fontWeight: 800, fontSize: 20, fontFamily: "Akrobat", }}>
                   Objectifs du processus
                 </Typography.Text>

@@ -1,445 +1,347 @@
-/* Cartography */
-
 :root {
-  --carto-text: #0b1220;
-  --carto-shadow-soft: 0 10px 30px rgba(0, 0, 0, .10);
-  --ease-out: cubic-bezier(.2, .9, .2, 1);
-  --ease-spring: cubic-bezier(.15, .95, .2, 1.05);
+  --carto1-bg: #f6f7fb;
+  --carto1-border: rgba(15, 23, 42, 0.10);
+  --carto1-border2: rgba(15, 23, 42, 0.08);
+  --carto1-text: #0b1220;
+  --carto1-sub: rgba(2, 6, 23, 0.62);
+  --carto1-radius: 18px;
+  --carto1-shadow: 0 18px 40px rgba(2, 6, 23, 0.08);
 }
 
-/* Layout */
-
-.pageCenter {
-  @apply min-h-[60vh] grid place-items-center px-6;
+.carto1Page {
+  min-height: 100dvh;
+  padding: 18px 12px 34px;
+  background:
+    radial-gradient(900px 420px at 25% 10%, rgba(59, 130, 246, 0.14), transparent 55%),
+    radial-gradient(900px 420px at 75% 18%, rgba(16, 185, 129, 0.10), transparent 55%),
+    linear-gradient(180deg, var(--carto1-bg), #eef2ff 65%, var(--carto1-bg));
 }
 
-.cartoPage {
-  @apply min-h-[100dvh] grid place-items-center px-6 py-10;
+.carto1Shell {
+  max-width: 1500px;
+  margin: 0 auto;
 }
 
-.cartoWrap {
-  @apply w-full max-w-[1240px];
+.carto1Center {
+  min-height: 60vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
 }
 
-/* Stage */
-
-.cartoStage {
-  @apply relative w-full overflow-hidden rounded-[18px] p-[26px];
-  height: 520px;
+.carto1Hero {
+  border-radius: var(--carto1-radius) !important;
+  background: rgba(255, 255, 255, 0.84) !important;
+  border: 1px solid var(--carto1-border) !important;
+  box-shadow: var(--carto1-shadow);
 }
 
-@media (max-width: 1100px) {
-  .cartoStage {
-    height: 560px;
-  }
+.carto1Header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: flex-start;
 }
 
-@media (max-width: 900px) {
-  .cartoStage {
-    height: 620px;
-  }
+.carto1HeaderLeft { flex: 1; min-width: 260px; }
+.carto1Title { margin: 0 !important; color: var(--carto1-text) !important; }
+.carto1Subtitle { display: block; margin-top: 6px; color: var(--carto1-sub) !important; }
+.carto1Search .ant-input { width: min(420px, 78vw); }
+
+.carto1Card {
+  border-radius: var(--carto1-radius) !important;
+  background: rgba(255, 255, 255, 0.90) !important;
+  border: 1px solid var(--carto1-border) !important;
+  box-shadow: 0 10px 22px rgba(2, 6, 23, 0.06);
 }
 
-/* Side panels */
+.carto1SideCard :where(.ant-card-body) {
+  padding: 10px 10px !important; /* réduit */
+}
 
-.sidePanel {
-  @apply absolute top-[26px] bottom-[26px] w-[210px];
+.carto1Card :where(.ant-card-head) {
+  background: transparent !important;
+  border-bottom: 1px solid var(--carto1-border2) !important;
+}
+
+/* Stakeholders compact */
+.carto1StakeList { display: grid; gap: 8px; }
+.carto1StakeItem {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 7px 8px;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+}
+.carto1Dot { width: 9px; height: 9px; border-radius: 999px; }
+.carto1DotBlue { background: rgba(59,130,246,.95); box-shadow: 0 0 0 4px rgba(59,130,246,.10); }
+.carto1DotGreen { background: rgba(16,185,129,.95); box-shadow: 0 0 0 4px rgba(16,185,129,.10); }
+.carto1StakeName { color: rgba(2,6,23,.78); font-size: 12.5px; line-height: 1.1; }
+
+/* ====== CHEVRONS (chaîne de valeur) ====== */
+
+/* Conteneur flex : les chevrons se chevauchent via margin négatif */
+.cartoChevronChain {
+  --arrow: 22px;          /* profondeur de la pointe / encoche */
   display: flex;
   align-items: stretch;
+  padding: 0 6px 6px;
 }
 
-@media (max-width: 1100px) {
-  .sidePanel {
-    width: 180px;
-  }
+/* Lien wrapper */
+.cartoChevronLink {
+  position: relative;
+  flex: 1 1 0%;
+  min-width: 0;
+  text-decoration: none;
 }
 
-@media (max-width: 900px) {
-  .sidePanel {
-    display: none;
-  }
+/* Overlap : chaque chevron (sauf le 1er) chevauche le précédent */
+.cartoChevronLink + .cartoChevronLink {
+  margin-left: calc(-1 * var(--arrow));
 }
 
-.sidePanelLeft {
-  @apply left-[10px];
+/* Le chevron lui-même */
+.cartoChevron {
+  height: 80px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px calc(var(--arrow) + 8px);
+  text-align: center;
+  transition: filter 160ms ease, transform 160ms ease;
+
+  /* forme : encoche gauche + pointe droite */
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--arrow)) 0,
+    100% 50%,
+    calc(100% - var(--arrow)) 100%,
+    0 100%,
+    var(--arrow) 50%
+  );
 }
 
-.sidePanelRight {
-  @apply right-[10px];
+/* Premier chevron : bord gauche plat (pas d'encoche) */
+.cartoChevronFirst {
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--arrow)) 0,
+    100% 50%,
+    calc(100% - var(--arrow)) 100%,
+    0 100%
+  );
+  padding-left: 12px;
 }
 
-/* AntD Card override inside panels */
-.sidePanelCard {
-  width: 100%;
-  height: 100%;
-  border-radius: 14px !important;
+/* Code process (petit badge) */
+.cartoChevronCode {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.85;
+  line-height: 1;
+}
+
+/* Nom du process */
+.cartoChevronName {
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.25;
   overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  max-width: 100%;
+}
+
+/* Hover */
+.cartoChevronLink:hover .cartoChevron {
+  filter: brightness(1.12);
+  transform: translateY(-2px);
+}
+
+/* Densité adaptative */
+.carto1DensityDense .cartoChevron {
+  height: 72px;
+}
+.carto1DensityDense .cartoChevronName {
+  font-size: 11.5px;
+  -webkit-line-clamp: 1;
+}
+
+.carto1DensityMicro .cartoChevron {
+  height: 64px;
+}
+.carto1DensityMicro .cartoChevronName {
+  font-size: 10.5px;
+  -webkit-line-clamp: 1;
+}
+.carto1DensityMicro .cartoChevronCode {
+  display: none;
+}
+
+/* Drawer */
+.carto1DrawerHeader {
   display: flex;
-  flex-direction: column;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: flex-start;
+}
+.carto1DrawerCard {
+  border-radius: 16px !important;
+  background: rgba(248, 250, 252, 1) !important;
+  border: 1px solid rgba(15, 23, 42, 0.08) !important;
+}
+.carto1SwatchRow { display: flex; gap: 10px; align-items: center; }
+.carto1Swatch {
+  width: 18px; height: 18px;
+  border-radius: 6px;
+  border: 1px solid rgba(15, 23, 42, 0.10);
 }
 
-.sidePanelCard .ant-card-head {
-  background: #1e40af;
-  color: #fff;
-  min-height: auto;
-  padding: 10px 14px;
-  border-bottom: none;
-}
+/* ====== STAGE (OVALE) - VERSION CLEAN ====== */
 
-.sidePanelCard .ant-card-head-title {
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  white-space: normal;
-  color: #fff;
-}
+.cartoStageX {
+  --stroke: #000dff;
 
-.sidePanelRight .sidePanelCard .ant-card-head {
-  background: #b91c1c;
-}
-
-.sidePanelCard .ant-card-body {
-  flex: 1;
-  overflow-y: auto;
-  padding: 12px 14px;
-  background: rgba(255, 255, 255, .85);
-}
-
-.sidePanelList {
-  @apply list-disc pl-4 m-0 text-[12px] leading-[1.6];
-  color: rgba(2, 6, 23, .75);
-}
-
-.sidePanelEmpty {
-  @apply text-[12px] italic;
-  color: rgba(2, 6, 23, .4);
-}
-
-/* Chain outer */
-
-.chainOuter {
-  @apply absolute top-[60px] left-1/2 -translate-x-1/2 rounded-[500px] box-border;
-  @apply px-[40px] pt-[52px] pb-[32px];
-  bottom: 26px;
-  width: min(820px, calc(100% - 460px));
-  border: 5px solid rgba(16, 184, 81, .40);
+  position: relative;
+  border-radius: 100px;
+  padding: 56px 22px 22px;
   background:
-    radial-gradient(700px 280px at 50% 30%, rgba(255, 255, 255, .70), rgba(255, 255, 255, .32)),
-    linear-gradient(180deg, rgba(255, 255, 255, .55), rgba(255, 255, 255, .30));
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  display: flex;
-  flex-direction: column;
+    radial-gradient(700px 260px at 50% 12%, rgba(255,255,255,0.98), rgba(255,255,255,0.78)),
+    linear-gradient(180deg, rgba(255,255,255,0.88), rgba(255,255,255,0.82));
+  border: 3px solid var(--stroke);
+  box-shadow: 0 18px 40px rgba(2, 6, 23, 0.08);
 }
 
-@media (max-width: 1100px) {
-  .chainOuter {
-    width: min(760px, calc(100% - 400px));
-  }
+.cartoStageX::before {
+  content: "";
+  position: absolute;
+  inset: 10px;
+  pointer-events: none;
 }
 
-@media (max-width: 900px) {
-  .chainOuter {
-    width: min(820px, 100%);
-  }
-}
+/* Manager pill (pas une card énorme) */
+.cartoStageXManager {
+  --mngt: #22c55e;
 
-/* Manager pill */
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
 
-.managerPill {
-  --pill-bg: #10b851;
+  padding: 12px 22px;
+  border-radius: 999px;
+  text-decoration: none;
 
-  @apply absolute top-[-22px] left-1/2 -translate-x-1/2 rounded-full px-[44px] py-[11px] no-underline;
-  @apply font-extrabold tracking-[3px] uppercase;
-  color: white;
+  color: #052e16;
   background:
     linear-gradient(135deg,
-      color-mix(in srgb, var(--pill-bg), black 5%) 0%,
-      var(--pill-bg) 40%,
-      color-mix(in srgb, var(--pill-bg), black 18%) 100%);
+      color-mix(in srgb, var(--mngt), white 72%) 0%,
+      color-mix(in srgb, var(--mngt), white 82%) 45%,
+      color-mix(in srgb, var(--mngt), white 70%) 100%);
+  border: 1px solid color-mix(in srgb, var(--mngt), white 55%);
   box-shadow:
-    0 18px 36px color-mix(in srgb, var(--pill-bg), transparent 78%),
-    0 10px 18px rgba(0, 0, 0, .10);
-  border: 1px solid rgba(255, 255, 255, .35);
-  position: absolute;
-  transition: transform .18s ease, filter .18s ease, box-shadow .18s ease;
+    0 18px 32px color-mix(in srgb, var(--mngt), transparent 78%),
+    0 10px 18px rgba(2, 6, 23, 0.10);
 }
 
-.managerPill:hover {
-  transform: translateX(-50%) translateY(-2px);
-  filter: brightness(1.05);
-  box-shadow:
-    0 24px 46px color-mix(in srgb, var(--pill-bg), transparent 74%),
-    0 14px 22px rgba(0, 0, 0, .12);
+.cartoStageXManager:hover {
+  transform: translateX(-50%) translateY(-1px);
+  filter: brightness(1.02);
 }
 
-.managerPill:active {
-  transform: translateX(-50%) translateY(0px) scale(.99);
+.cartoStageXManagerIcon {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mngt), white 60%);
+  color: color-mix(in srgb, var(--mngt), black 35%);
 }
 
-.managerPill:focus-visible {
-  outline: none;
-  box-shadow:
-    0 0 0 5px rgba(47, 99, 204, .18),
-    0 18px 36px color-mix(in srgb, var(--pill-bg), transparent 78%),
-    0 10px 18px rgba(0, 0, 0, .10);
+.cartoStageXManagerText {
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-size: 12px;
+  line-height: 1;
+  white-space: nowrap;
 }
 
-.managerPillDisabled {
-  @apply cursor-default opacity-80;
-  background: linear-gradient(135deg, rgba(148, 163, 184, 1), rgba(100, 116, 139, 1));
-  box-shadow: 0 12px 22px rgba(0, 0, 0, .10);
+.cartoStageXManagerDisabled {
+  opacity: 0.75;
+  cursor: default;
 }
 
-/* Title bar */
+/* Bandeau titre (plus “pro” et mieux positionné) */
+.cartoStageXTitle {
+  width: min(620px, 92%);
+  margin: 14px auto 18px;
+  text-align: center;
 
-.titleBar {
-  @apply mx-auto rounded-[14px] px-[16px] py-[12px] text-center font-extrabold uppercase tracking-[2.5px];
-  width: min(560px, 100%);
-  color: rgba(255, 255, 255, .96);
-  background: linear-gradient(135deg, #2f63cc 0%, #3b82f6 45%, #1e40af 100%);
-  border: 1px solid rgba(255, 255, 255, .28);
-  box-shadow: 0 18px 36px rgba(47, 99, 204, .20), 0 10px 18px rgba(0, 0, 0, .10);
+  padding: 12px 14px;
+  border-radius: 14px;
+
+  font-weight: 900;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #ffffff;
+
+  background: linear-gradient(135deg, #1d4ed8 0%, #3b82f6 45%, #1e40af 100%);
+  box-shadow: 0 16px 30px rgba(29, 78, 216, 0.22);
 }
 
-/* Tiles */
-
-.tilesRow {
-  @apply flex flex-nowrap items-center justify-center;
-  margin: auto 0;
+/* Chain (empty placeholder centrage) */
+.cartoStageXChain {
+  padding: 0 6px 6px;
 }
 
-.processTile {
-  --tile-bg: #cbd5e1;
-  @apply grid place-items-center h-[72px] no-underline font-extrabold;
-  flex: 1 1 0;
-  min-width: 0;
-  background: var(--tile-bg);
-  color: var(--carto-text);
-  position: relative;
-  margin: 0 1px;
-}
-
-/* Arrow pointer – colored triangle extending to the right */
-.processTile::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 100%;
-  border-left: 22px solid var(--tile-bg);
-  border-top: 36px solid transparent;
-  border-bottom: 36px solid transparent;
-  z-index: 20;
-}
-
-/* Notch – background-colored triangle on the left (interlocking cut) */
-.tileMid::before,
-.tileLast::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  border-left: 20px solid rgba(255, 255, 255, .85);
-  border-top: 36px solid transparent;
-  border-bottom: 36px solid transparent;
-}
-
-.processTile:hover {
-  filter: brightness(1.08);
-}
-
-.processTile:active {
-  filter: brightness(.96);
-}
-
-.processTile:focus-visible {
-  outline: none;
-  filter: brightness(1.12);
-}
-
-.tileText {
-  @apply text-center leading-[1.10];
-  text-shadow: 0 1px 0 rgba(255, 255, 255, .25);
-  font-size: 13px;
-  position: relative;
-  z-index: 2;
-}
-
-/* Extra left padding on tiles with notch so text doesn't overlap the triangle */
-.tileMid .tileText,
-.tileLast .tileText {
-  padding-left: 16px;
-}
-
-/* ── Entrance animations (triggered by .cartoAnim.isReady) ── */
-
-.cartoAnim:not(.isReady)>* {
-  visibility: hidden;
-}
-
-.cartoAnim.isReady {
-  animation: fadeUp 700ms var(--ease-out) both;
-}
-
-.cartoAnim.isReady .sidePanelLeft {
-  animation: slideLeft 780ms var(--ease-spring) 120ms both;
-}
-
-.cartoAnim.isReady .sidePanelRight {
-  animation: slideRight 780ms var(--ease-spring) 120ms both;
-}
-
-.cartoAnim.isReady .chainOuter {
-  animation: chainPop 820ms var(--ease-spring) 160ms both;
-}
-
-.cartoAnim.isReady .managerPill {
-  animation: pillDrop 680ms var(--ease-spring) 320ms both;
-}
-
-.cartoAnim.isReady .titleBar {
-  animation: fadeUp 640ms var(--ease-out) 380ms both;
-}
-
-.cartoAnim.isReady .processTile {
-  opacity: 0;
-  animation: tileIn 700ms var(--ease-spring) both;
-}
-
-@keyframes fadeUp {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
+/* Mobile: chevrons deviennent des rectangles en colonne */
+@media (max-width: 1024px) {
+  .cartoStageX {
+    border-radius: 18px;
+    padding: 18px;
+  }
+  .cartoStageX::before {
+    display: none;
+  }
+  .cartoStageXManager {
+    position: static;
+    transform: none;
+    width: 100%;
+    justify-content: center;
+    margin-bottom: 12px;
   }
 
-  to {
-    opacity: 1;
-    transform: translateY(0);
+  .cartoChevronChain {
+    flex-direction: column;
   }
-}
-
-@keyframes slideLeft {
-  from {
-    opacity: 0;
-    transform: translateX(-14px);
+  .cartoChevronLink + .cartoChevronLink {
+    margin-left: 0;
+    margin-top: 6px;
   }
-
-  to {
-    opacity: 1;
-    transform: translateX(0);
+  .cartoChevron {
+    clip-path: none;
+    border-radius: 12px;
+    height: auto;
+    min-height: 52px;
+    padding: 10px 16px;
   }
-}
-
-@keyframes slideRight {
-  from {
-    opacity: 0;
-    transform: translateX(14px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes chainPop {
-  from {
-    opacity: 0;
-    transform: translateX(-50%) translateY(12px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-  }
-}
-
-@keyframes pillDrop {
-  from {
-    opacity: 0;
-    transform: translateX(-50%) translateY(-10px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-  }
-}
-
-@keyframes tileIn {
-  from {
-    opacity: 0;
-    transform: translateY(12px) scale(.985);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-/* Tile stagger delays */
-
-.cartoAnim.isReady .processTile:nth-child(1) {
-  animation-delay: 520ms;
-}
-
-.cartoAnim.isReady .processTile:nth-child(2) {
-  animation-delay: 600ms;
-}
-
-.cartoAnim.isReady .processTile:nth-child(3) {
-  animation-delay: 680ms;
-}
-
-.cartoAnim.isReady .processTile:nth-child(4) {
-  animation-delay: 760ms;
-}
-
-.cartoAnim.isReady .processTile:nth-child(5) {
-  animation-delay: 840ms;
-}
-
-.cartoAnim.isReady .processTile:nth-child(6) {
-  animation-delay: 920ms;
-}
-
-.cartoAnim.isReady .processTile:nth-child(7) {
-  animation-delay: 1000ms;
-}
-
-.cartoAnim.isReady .processTile:nth-child(8) {
-  animation-delay: 1080ms;
-}
-
-.cartoAnim.isReady .processTile:nth-child(9) {
-  animation-delay: 1160ms;
-}
-
-.cartoAnim.isReady .processTile:nth-child(10) {
-  animation-delay: 1240ms;
-}
-
-.cartoAnim.isReady .processTile:nth-child(11) {
-  animation-delay: 1320ms;
-}
-
-.cartoAnim.isReady .processTile:nth-child(12) {
-  animation-delay: 1400ms;
-}
-
-/* Accessibility */
-
-@media (prefers-reduced-motion: reduce) {
-
-  .cartoAnim.isReady,
-  .cartoAnim.isReady .sidePanelLeft,
-  .cartoAnim.isReady .sidePanelRight,
-  .cartoAnim.isReady .chainOuter,
-  .cartoAnim.isReady .managerPill,
-  .cartoAnim.isReady .titleBar,
-  .cartoAnim.isReady .processTile {
-    animation: none !important;
-    transition: none !important;
+  .cartoChevronFirst {
+    clip-path: none;
+    padding-left: 16px;
   }
 }
