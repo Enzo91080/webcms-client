@@ -10,16 +10,25 @@
 
 .carto1Page {
   min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
   padding: 18px 12px 34px;
-  background:
-    radial-gradient(900px 420px at 25% 10%, rgba(59, 130, 246, 0.14), transparent 55%),
-    radial-gradient(900px 420px at 75% 18%, rgba(16, 185, 129, 0.10), transparent 55%),
-    linear-gradient(180deg, var(--carto1-bg), #eef2ff 65%, var(--carto1-bg));
 }
 
 .carto1Shell {
   max-width: 1500px;
+  width: 100%;
   margin: 0 auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Les 3 blocs prennent l'espace restant et se centrent verticalement */
+.carto1Main {
+  flex: 1;
+  display: flex;
+  align-items: center;
 }
 
 .carto1Center {
@@ -30,62 +39,187 @@
 }
 
 .carto1Hero {
-  border-radius: var(--carto1-radius) !important;
-  background: rgba(255, 255, 255, 0.84) !important;
-  border: 1px solid var(--carto1-border) !important;
-  box-shadow: var(--carto1-shadow);
-}
-
-.carto1Header {
   display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-  align-items: flex-start;
+  align-items: center;
+  gap: 18px;
+  padding: 18px 28px;
+  border-radius: 16px;
+  background:
+    linear-gradient(135deg, #1e3a8a 0%, #2563eb 50%, #3b82f6 100%);
+  box-shadow:
+    0 8px 24px rgba(30, 58, 138, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  position: relative;
+  overflow: hidden;
 }
 
-.carto1HeaderLeft { flex: 1; min-width: 260px; }
-.carto1Title { margin: 0 !important; color: var(--carto1-text) !important; }
-.carto1Subtitle { display: block; margin-top: 6px; color: var(--carto1-sub) !important; }
-.carto1Search .ant-input { width: min(420px, 78vw); }
+/* Accent lumineux décoratif */
+.carto1Hero::before {
+  content: "";
+  position: absolute;
+  top: -40%;
+  right: -5%;
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(96, 165, 250, 0.35), transparent 70%);
+  pointer-events: none;
+}
+.carto1Hero::after {
+  content: "";
+  position: absolute;
+  bottom: -50%;
+  left: 10%;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(147, 197, 253, 0.2), transparent 70%);
+  pointer-events: none;
+}
+
+.carto1HeroIcon {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.carto1HeroText {
+  position: relative;
+  z-index: 1;
+}
+
+.carto1Title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.carto1Subtitle {
+  margin: 4px 0 0;
+  font-size: 13.5px;
+  color: rgba(255, 255, 255, 0.72);
+  line-height: 1.3;
+}
 
 .carto1Card {
   border-radius: var(--carto1-radius) !important;
-  background: rgba(255, 255, 255, 0.90) !important;
-  border: 1px solid var(--carto1-border) !important;
-  box-shadow: 0 10px 22px rgba(2, 6, 23, 0.06);
+  background: rgba(255, 255, 255, 0.60) !important;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.50) !important;
+  box-shadow: 0 4px 16px rgba(2, 6, 23, 0.05);
 }
 
 .carto1SideCard :where(.ant-card-body) {
-  padding: 10px 10px !important; /* réduit */
+  padding: 8px 8px !important;
+  @apply shadow-2xl;
 }
 
 .carto1Card :where(.ant-card-head) {
   background: transparent !important;
   border-bottom: 1px solid var(--carto1-border2) !important;
+  min-height: 36px !important;
+  padding: 0 12px !important;
+  font-size: 13px;
+}
+
+/* Side panel hero headers */
+.carto1SidePanel {
+  display: flex;
+  flex-direction: column;
+}
+
+.carto1SideHero {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 16px 16px 0 0;
+  background:
+    linear-gradient(135deg, #1e3a8a 0%, #2563eb 50%, #3b82f6 100%);
+  box-shadow:
+    0 4px 12px rgba(30, 58, 138, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  position: relative;
+  overflow: hidden;
+}
+
+.carto1SideHero::before {
+  content: "";
+  position: absolute;
+  top: -60%;
+  right: -15%;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(96, 165, 250, 0.3), transparent 70%);
+  pointer-events: none;
+}
+
+.carto1SideHeroIcon {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.carto1SideHeroTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.2;
+  position: relative;
+  @apply font-display;
+  z-index: 1;
+}
+
+.carto1SidePanel > .carto1Card {
+  border-radius: 0 0 var(--carto1-radius) var(--carto1-radius) !important;
 }
 
 /* Stakeholders compact */
-.carto1StakeList { display: grid; gap: 8px; }
+.carto1StakeList { display: grid; gap: 4px; }
 .carto1StakeItem {
   display: flex;
   gap: 8px;
   align-items: center;
-  padding: 7px 8px;
-  border-radius: 12px;
-  background: #fff;
-  border: 1px solid rgba(15, 23, 42, 0.08);
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: transparent;
+  border: none;
+  transition: background 120ms ease;
 }
-.carto1Dot { width: 9px; height: 9px; border-radius: 999px; }
-.carto1DotBlue { background: rgba(59,130,246,.95); box-shadow: 0 0 0 4px rgba(59,130,246,.10); }
-.carto1DotGreen { background: rgba(16,185,129,.95); box-shadow: 0 0 0 4px rgba(16,185,129,.10); }
-.carto1StakeName { color: rgba(2,6,23,.78); font-size: 12.5px; line-height: 1.1; }
+.carto1StakeItem:hover {
+  background: rgba(255, 255, 255, 0.6);
+}
+.carto1Dot { width: 8px; height: 8px; border-radius: 999px; flex-shrink: 0; }
+.carto1DotBlue { background: rgba(59,130,246,.90); box-shadow: 0 0 0 3px rgba(59,130,246,.12); }
+.carto1DotGreen { background: rgba(16,185,129,.90); box-shadow: 0 0 0 3px rgba(16,185,129,.12); }
+.carto1StakeName { color: rgba(2,6,23,.72); font-size: 12px; line-height: 1.2; }
 
 /* ====== CHEVRONS (chaîne de valeur) ====== */
 
 /* Conteneur flex : les chevrons se chevauchent via margin négatif */
 .cartoChevronChain {
   --arrow: 22px;          /* profondeur de la pointe / encoche */
+  --bw: 3px;              /* épaisseur de la bordure colorée */
   display: flex;
   align-items: stretch;
   padding: 0 6px 6px;
@@ -97,6 +231,7 @@
   flex: 1 1 0%;
   min-width: 0;
   text-decoration: none;
+  transition: filter 200ms ease;
 }
 
 /* Overlap : chaque chevron (sauf le 1er) chevauche le précédent */
@@ -104,17 +239,22 @@
   margin-left: calc(-1 * var(--arrow));
 }
 
-/* Le chevron lui-même */
+/* Le chevron lui-même — le background coloré sert de bordure */
 .cartoChevron {
-  height: 80px;
+  height: 88px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  padding: 8px calc(var(--arrow) + 8px);
+  gap: 5px;
+  padding: 8px calc(var(--arrow) + 10px);
   text-align: center;
-  transition: filter 160ms ease, transform 160ms ease;
+  cursor: pointer;
+  position: relative;
+  transition: transform 160ms ease;
+
+  background: var(--chevron-color, #94a3b8);
+  color: #0b1220;
 
   /* forme : encoche gauche + pointe droite */
   clip-path: polygon(
@@ -124,6 +264,24 @@
     calc(100% - var(--arrow)) 100%,
     0 100%,
     var(--arrow) 50%
+  );
+}
+
+/* Remplissage blanc interne — crée l'effet de bordure */
+.cartoChevron::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: #ffffff;
+  transition: background 160ms ease;
+  clip-path: polygon(
+    var(--bw) var(--bw),
+    calc(100% - var(--arrow) - var(--bw)) var(--bw),
+    calc(100% - var(--bw)) 50%,
+    calc(100% - var(--arrow) - var(--bw)) calc(100% - var(--bw)),
+    var(--bw) calc(100% - var(--bw)),
+    calc(var(--arrow) + var(--bw)) 50%
   );
 }
 
@@ -139,21 +297,30 @@
   padding-left: 12px;
 }
 
-/* Code process (petit badge) */
-.cartoChevronCode {
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  opacity: 0.85;
-  line-height: 1;
+.cartoChevronFirst::before {
+  clip-path: polygon(
+    var(--bw) var(--bw),
+    calc(100% - var(--arrow) - var(--bw)) var(--bw),
+    calc(100% - var(--bw)) 50%,
+    calc(100% - var(--arrow) - var(--bw)) calc(100% - var(--bw)),
+    var(--bw) calc(100% - var(--bw))
+  );
 }
 
-/* Nom du process */
+/* Zone A — Code process (Tag antd) */
+.cartoChevronCode {
+  position: relative;
+  z-index: 1;
+}
+
+/* Zone B — Nom du process (hauteur fixe = alignement garanti) */
 .cartoChevronName {
-  font-size: 12.5px;
-  font-weight: 600;
-  line-height: 1.25;
+  position: relative;
+  z-index: 1;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.3;
+  height: 34px;
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;
@@ -162,10 +329,27 @@
   max-width: 100%;
 }
 
-/* Hover */
+/* Hover — fond interne légèrement teinté + lift */
 .cartoChevronLink:hover .cartoChevron {
-  filter: brightness(1.12);
   transform: translateY(-2px);
+}
+.cartoChevronLink:hover .cartoChevron::before {
+  background: color-mix(in srgb, var(--chevron-color, #94a3b8) 8%, white);
+}
+
+/* Focus clavier — halo autour de la forme */
+.cartoChevronLink:focus-visible {
+  outline: none;
+  filter: drop-shadow(0 0 3px var(--chevron-color, #94a3b8))
+          drop-shadow(0 0 1px var(--chevron-color, #94a3b8));
+}
+
+/* Active / Pressed — feedback au clic */
+.cartoChevronLink:active .cartoChevron {
+  transform: translateY(0);
+}
+.cartoChevronLink:active .cartoChevron::before {
+  background: color-mix(in srgb, var(--chevron-color, #94a3b8) 14%, white);
 }
 
 /* Densité adaptative */
@@ -174,6 +358,7 @@
 }
 .carto1DensityDense .cartoChevronName {
   font-size: 11.5px;
+  height: 15px;
   -webkit-line-clamp: 1;
 }
 
@@ -182,6 +367,7 @@
 }
 .carto1DensityMicro .cartoChevronName {
   font-size: 10.5px;
+  height: 14px;
   -webkit-line-clamp: 1;
 }
 .carto1DensityMicro .cartoChevronCode {
@@ -210,16 +396,19 @@
 /* ====== STAGE (OVALE) - VERSION CLEAN ====== */
 
 .cartoStageX {
-  --stroke: #000dff;
+  --stroke: #3b5bdb;
 
   position: relative;
   border-radius: 100px;
-  padding: 56px 22px 22px;
+  padding: 52px 60px 20px;
   background:
-    radial-gradient(700px 260px at 50% 12%, rgba(255,255,255,0.98), rgba(255,255,255,0.78)),
-    linear-gradient(180deg, rgba(255,255,255,0.88), rgba(255,255,255,0.82));
-  border: 3px solid var(--stroke);
-  box-shadow: 0 18px 40px rgba(2, 6, 23, 0.08);
+    radial-gradient(600px 200px at 50% 10%, rgba(235,240,255,0.6), transparent),
+    rgba(255,255,255,0.35);
+  backdrop-filter: blur(8px);
+  border: 2.5px solid var(--stroke);
+  box-shadow:
+    0 8px 24px rgba(59, 91, 219, 0.10),
+    inset 0 1px 0 rgba(255,255,255,0.5);
 }
 
 .cartoStageX::before {
@@ -286,27 +475,130 @@
   cursor: default;
 }
 
-/* Bandeau titre (plus “pro” et mieux positionné) */
+/* Bandeau titre */
 .cartoStageXTitle {
-  width: min(620px, 92%);
-  margin: 14px auto 18px;
+  width: min(520px, 88%);
+  margin: 10px auto 16px;
   text-align: center;
 
-  padding: 12px 14px;
-  border-radius: 14px;
+  padding: 9px 14px;
+  border-radius: 10px;
 
-  font-weight: 900;
-  letter-spacing: 0.22em;
+  font-weight: 800;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
+  font-size: 12px;
   color: #ffffff;
 
-  background: linear-gradient(135deg, #1d4ed8 0%, #3b82f6 45%, #1e40af 100%);
-  box-shadow: 0 16px 30px rgba(29, 78, 216, 0.22);
+  background: linear-gradient(135deg, #2b52b8 0%, #4a7cf7 50%, #2b52b8 100%);
+  box-shadow: 0 6px 16px rgba(29, 78, 216, 0.18);
 }
 
 /* Chain (empty placeholder centrage) */
 .cartoStageXChain {
   padding: 0 6px 6px;
+}
+
+/* ====== MICROSCOPE BUTTON ====== */
+
+.cartoMicroscopeBtn {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 90px;
+  height: 68px;
+  padding: 6px;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.10);
+  backdrop-filter: blur(6px);
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color 200ms, box-shadow 200ms, transform 200ms;
+  flex-shrink: 0;
+}
+.cartoMicroscopeBtn:hover {
+  border-color: rgba(255, 255, 255, 0.45);
+  box-shadow: 0 4px 16px rgba(30, 58, 138, 0.3);
+  transform: translateY(-1px);
+}
+.cartoMicroscopeBtn:active {
+  transform: translateY(0);
+}
+
+.cartoMicroscopeImg {
+  width: 100%;
+  flex: 1;
+  object-fit: cover;
+  border-radius: 6px;
+  transition: opacity 300ms;
+}
+
+.cartoMicroscopeSkeleton {
+  position: absolute;
+  inset: 6px;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.cartoMicroscopePlaceholder {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.cartoMicroscopeLabel {
+  font-size: 10px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.8);
+  letter-spacing: 0.02em;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+/* ---- Modal zoom/pan ---- */
+.cartoZoomToolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-bottom: 1px solid #f0f0f0;
+  background: #fafafa;
+}
+.cartoZoomLevel {
+  min-width: 44px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+}
+.cartoZoomContainer {
+  width: 100%;
+  height: 75vh;
+  overflow: hidden;
+  cursor: grab;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    repeating-conic-gradient(#f1f5f9 0% 25%, #fff 0% 50%) 0 0 / 20px 20px;
+}
+.cartoZoomContainer:active {
+  cursor: grabbing;
+}
+.cartoZoomImage {
+  max-width: none;
+  transform-origin: center center;
+  transition: transform 80ms ease-out;
+  user-select: none;
+  pointer-events: none;
 }
 
 /* Mobile: chevrons deviennent des rectangles en colonne */
@@ -339,6 +631,11 @@
     height: auto;
     min-height: 52px;
     padding: 10px 16px;
+    background: #ffffff;
+    border: 3px solid var(--chevron-color, #94a3b8);
+  }
+  .cartoChevron::before {
+    display: none;
   }
   .cartoChevronFirst {
     clip-path: none;

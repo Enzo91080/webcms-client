@@ -2,7 +2,7 @@ import type { SipocRow } from "../../../../shared/types";
 import { useLogigrammeEditor } from "./state/useLogigrammeEditor";
 import Toolbar from "./ui/Toolbar";
 import Canvas from "./ui/Canvas";
-import Inspector from "./ui/Inspector";
+import ShapePalette from "./ui/ShapePalette";
 
 type LogigrammeEditorProps = {
   processId: string;
@@ -25,54 +25,55 @@ export default function LogigrammeEditor({
   });
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 420px", gap: 12 }}>
-      {/* Canvas + Toolbar */}
+    <div style={{ display: "grid", gridTemplateColumns: "150px 1fr", gap: 0 }}>
+      {/* Palette de formes (DnD) */}
       <div
         style={{
-          border: "1px solid #e5e7eb",
-          overflow: "hidden",
-          background: "#fff",
-          boxShadow: "0 10px 24px rgba(2,6,23,0.06)",
+          borderRight: "1px solid #e5e7eb",
+          background: "#fafbfc",
+          overflow: "auto",
         }}
       >
+        <ShapePalette />
+      </div>
+
+      {/* Toolbar + Canvas */}
+      <div style={{ overflow: "hidden", background: "#fff" }}>
         <Toolbar
-          // State
           autoSync={editor.autoSync}
-          connectMode={editor.connectMode}
-          connectSourceId={editor.connectSourceId}
           saving={editor.saving}
           dirty={editor.dirty}
           selectedCount={editor.selectedCount}
-          // Feature toggles
           guidesEnabled={editor.guidesEnabled}
           orthogonalEdges={editor.orthogonalEdges}
-          // History
+          selectedNode={editor.selectedNode}
+          selectedEdge={editor.selectedEdge}
           canUndo={editor.canUndo}
           canRedo={editor.canRedo}
-          onUndo={editor.undo}
-          onRedo={editor.redo}
-          // Callbacks - state
           onAutoSyncChange={editor.setAutoSync}
           onGuidesChange={editor.setGuidesEnabled}
           onOrthogonalChange={editor.setOrthogonalEdges}
-          // Callbacks - clipboard
+          onUndo={editor.undo}
+          onRedo={editor.redo}
           onCopy={editor.copy}
           onPaste={editor.paste}
           onDuplicate={editor.duplicate}
           onDelete={editor.deleteSelection}
-          // Callbacks - align/distribute
           onAlign={editor.align}
           onDistribute={editor.distribute}
           canAlign={editor.canAlign}
           canDistribute={editor.canDistribute}
-          // Callbacks - legacy
           onSyncFromSipoc={editor.syncFromSipoc}
           onRebuildFlow={editor.rebuildDefaultFlow}
           onAutoLayout={editor.autoLayout}
           onFitView={editor.fitView}
-          onToggleConnectMode={editor.toggleConnectMode}
-          onExitConnectMode={editor.exitConnectMode}
           onSave={editor.save}
+          onExportJSON={editor.exportJSON}
+          onImportJSON={editor.importJSON}
+          onUpdateNode={editor.updateSelectedNode}
+          onUpdateNodeStyle={editor.updateSelectedNodeStyle}
+          onUpdateEdge={editor.updateSelectedEdge}
+          onDeleteEdge={editor.deleteSelectedEdge}
         />
 
         <Canvas
@@ -89,23 +90,9 @@ export default function LogigrammeEditor({
           onEdgeClick={editor.onEdgeClick}
           onPaneClick={editor.onPaneClick}
           onSelectionChange={editor.onSelectionChange}
+          onDropNode={editor.addNode}
         />
       </div>
-
-      {/* Inspector */}
-      <Inspector
-        selectedNode={editor.selectedNode}
-        selectedEdge={editor.selectedEdge}
-        legend={editor.legend}
-        onUpdateNode={editor.updateSelectedNode}
-        onUpdateNodeStyle={editor.updateSelectedNodeStyle}
-        onUpdateEdge={editor.updateSelectedEdge}
-        onDeleteEdge={editor.deleteSelectedEdge}
-        onResetLegend={editor.resetLegend}
-        onAddLegendItem={editor.addLegendItem}
-        onUpdateLegendItem={editor.updateLegendItem}
-        onDeleteLegendItem={editor.deleteLegendItem}
-      />
     </div>
   );
 }

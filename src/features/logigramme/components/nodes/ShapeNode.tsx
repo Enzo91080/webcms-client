@@ -1,5 +1,5 @@
 import { memo } from "react";
-import { Handle, Position } from "reactflow";
+import { Handle, Position, NodeResizer } from "reactflow";
 import type { ShapeNodeData } from "../editor/model/types";
 
 function px(n: unknown, fallback: number): number {
@@ -7,26 +7,48 @@ function px(n: unknown, fallback: number): number {
   return Number.isFinite(v) ? v : fallback;
 }
 
-type ShapeNodeProps = {
-  data: ShapeNodeData;
+const handleStyle: React.CSSProperties = {
+  width: 10,
+  height: 10,
+  background: "#fff",
+  border: "2px solid #94a3b8",
+  opacity: 0,
+  transition: "opacity 150ms, border-color 150ms, transform 150ms",
 };
 
-function ShapeNode({ data }: ShapeNodeProps) {
+const handleHoverCss = `
+.logiNode:hover .react-flow__handle {
+  opacity: 1 !important;
+}
+.react-flow__handle:hover {
+  border-color: #3b82f6 !important;
+  transform: scale(1.3);
+}
+.react-flow__handle.connecting {
+  border-color: #3b82f6 !important;
+  opacity: 1 !important;
+}
+`;
+
+type ShapeNodeProps = {
+  data: ShapeNodeData;
+  selected: boolean;
+};
+
+function ShapeNode({ data, selected }: ShapeNodeProps) {
   const shape = data?.shape || "rectangle";
   const label = data?.label || "";
   const st = data?.style || {};
   const isLinkSource = Boolean(data?.isLinkSource);
 
-  const width = px(st.width, 220);
-  const height = px(st.height, shape === "diamond" || shape === "diamond-x" ? 110 : 64);
   const fill = String(st.fill || "#ffffff");
   const stroke = String(st.stroke || "#cbd5e1");
   const text = String(st.text || "#0f172a");
   const fontSize = px(st.fontSize, 13);
 
   const baseStyle: React.CSSProperties = {
-    width,
-    height,
+    width: "100%",
+    height: "100%",
     background: fill,
     border: `2px solid ${stroke}`,
     color: text,
@@ -52,27 +74,49 @@ function ShapeNode({ data }: ShapeNodeProps) {
     baseStyle.borderRadius = "999px";
   } else if (shape === "diamond" || shape === "diamond-x") {
     baseStyle.transform = "rotate(45deg)";
-    baseStyle.width = height;
-    baseStyle.height = height;
   }
 
   return (
-    <div style={baseStyle}>
-      <Handle type="target" position={Position.Top} style={{ opacity: 0 }} />
-      <div
-        style={
-          shape === "diamond" || shape === "diamond-x"
-            ? { transform: "rotate(-45deg)", padding: 6 }
-            : {}
-        }
-      >
-        {label}
-        {shape === "diamond-x" && (
-          <div style={{ fontSize: 12, opacity: 0.85 }}>✕</div>
-        )}
+    <>
+      <NodeResizer
+        isVisible={selected}
+        minWidth={80}
+        minHeight={40}
+        lineStyle={{ borderColor: "#3b82f6", borderWidth: 1 }}
+        handleStyle={{
+          width: 8,
+          height: 8,
+          background: "#fff",
+          border: "2px solid #3b82f6",
+          borderRadius: 2,
+        }}
+      />
+      <div className="logiNode" style={baseStyle}>
+        <style>{handleHoverCss}</style>
+
+        <Handle type="target" position={Position.Top} id="top" style={handleStyle} />
+        <Handle type="source" position={Position.Top} id="top-src" style={handleStyle} />
+        <Handle type="target" position={Position.Bottom} id="bottom" style={handleStyle} />
+        <Handle type="source" position={Position.Bottom} id="bottom-src" style={handleStyle} />
+        <Handle type="target" position={Position.Left} id="left" style={handleStyle} />
+        <Handle type="source" position={Position.Left} id="left-src" style={handleStyle} />
+        <Handle type="target" position={Position.Right} id="right" style={handleStyle} />
+        <Handle type="source" position={Position.Right} id="right-src" style={handleStyle} />
+
+        <div
+          style={
+            shape === "diamond" || shape === "diamond-x"
+              ? { transform: "rotate(-45deg)", padding: 6 }
+              : {}
+          }
+        >
+          {label}
+          {shape === "diamond-x" && (
+            <div style={{ fontSize: 12, opacity: 0.85 }}>✕</div>
+          )}
+        </div>
       </div>
-      <Handle type="source" position={Position.Bottom} style={{ opacity: 0 }} />
-    </div>
+    </>
   );
 }
 

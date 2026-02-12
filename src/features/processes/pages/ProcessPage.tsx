@@ -14,8 +14,8 @@ import {
   Divider,
   Modal,
   Row,
+  Skeleton,
   Space,
-  Spin,
   Steps,
   Tag,
   Typography,
@@ -31,15 +31,6 @@ import { ProcessHeroCard, ProcessLegend } from "../components";
 import { getCartography, getPath, getProcessByCode, getProcessListLite } from "../../../shared/api";
 import type { ProcessFull, ProcessLite, PathItem, ProcessStakeholder } from "../../../shared/types";
 import { getErrorMessage, normalizeDocs, normalizeObjectives } from "../../../shared/utils";
-
-function getContrastText(hex: string | null | undefined): string {
-  if (!hex || !/^#[0-9a-fA-F]{6}$/.test(hex)) return "#0b1220";
-  const r = parseInt(hex.slice(1, 3), 16) / 255;
-  const g = parseInt(hex.slice(3, 5), 16) / 255;
-  const b = parseInt(hex.slice(5, 7), 16) / 255;
-  const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-  return lum > 0.5 ? "#0b1220" : "#ffffff";
-}
 
 function processBadgeFromCode(code: string) {
   return `PR-${code}-01`;
@@ -255,15 +246,17 @@ export default function ProcessPage() {
         style={{
           minHeight: "100vh",
           background: "#f5f5f5",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
+          padding: "24px",
         }}
       >
-        <Space direction="vertical" align="center" size="large">
-          <Spin size="large" />
-          <Typography.Text type="secondary">Chargement du processus...</Typography.Text>
-        </Space>
+        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+          <Card bordered={false} style={{ borderRadius: 16, marginBottom: 24 }}>
+            <Skeleton active paragraph={{ rows: 3 }} />
+          </Card>
+          <Card bordered={false} style={{ borderRadius: 16 }}>
+            <Skeleton active paragraph={{ rows: 6 }} />
+          </Card>
+        </div>
       </div>
     );
   }
@@ -292,14 +285,6 @@ export default function ProcessPage() {
       >
         {/* Navigation bar: Breadcrumb (left) + Steps (right) */}
         <div style={{ marginBottom: 16 }}>
-          <Button
-            type="text"
-            icon={<ArrowLeftOutlined />}
-            href="/"
-            style={{ padding: "4px 12px", marginBottom: 8 }}
-          >
-            Retour à la cartographie
-          </Button>
           <div className="flex items-center justify-between flex-wrap gap-2"
           >
             <Breadcrumb items={breadcrumbItems} style={{ fontSize: 13 }} />
@@ -308,7 +293,7 @@ export default function ProcessPage() {
                 size="small"
                 type="inline"
                 current={stepsData.current}
-                style={{ maxWidth: 600, flex: "0 1 auto" }}
+                style={{ maxWidth: 1800, flex: "0 1 auto" }}
                 onChange={(idx) => {
                   if (idx === stepsData.current) return;
                   const target = stepsData.items[idx];

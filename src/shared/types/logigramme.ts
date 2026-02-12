@@ -27,6 +27,8 @@ export type LogiEdge = {
   id: string;
   from: string;
   to: string;
+  fromHandle?: string;
+  toHandle?: string;
   label?: string;
   color?: string;
   width?: number;

@@ -73,6 +73,15 @@ export function buildFromSipoc(
 
     const position = prev?.position || layout.get(id) || { x: 0, y: 0 };
 
-    return { id, type: "shape", position, data };
+    return {
+      id,
+      type: "shape",
+      position,
+      data,
+      // Preserve dimensions from previous node (resize)
+      ...(prev?.width ? { width: prev.width } : {}),
+      ...(prev?.height ? { height: prev.height } : {}),
+      ...(prev?.style ? { style: prev.style } : {}),
+    };
   });
 }

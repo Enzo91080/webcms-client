@@ -254,8 +254,44 @@ export function useLogigrammeEditor({
       }
     }
 
+    // Detect dimension changes from NodeResizer
+    const resizedIds = new Set<string>();
+    let resizeEnded = false;
+    for (const change of changes) {
+      if (change.type === "dimensions") {
+        resizedIds.add(change.id);
+        if ((change as any).resizing === false) resizeEnded = true;
+      }
+    }
+
     setNodes((nds) => {
-      const updated = applyNodeChanges(changes, nds);
+      let updated = applyNodeChanges(changes, nds);
+
+      // Sync resize dimensions to data.style + node.style (so toolbar inputs update & wrapper stays sized)
+      if (resizedIds.size > 0) {
+        updated = updated.map((n) => {
+          if (!resizedIds.has(n.id)) return n;
+          const w = n.width;
+          const h = n.height;
+          if (w && h) {
+            const rw = Math.round(w);
+            const rh = Math.round(h);
+            return {
+              ...n,
+              style: { ...(n.style || {}), width: rw, height: rh },
+              data: {
+                ...n.data,
+                style: {
+                  ...(n.data?.style || {}),
+                  width: rw,
+                  height: rh,
+                },
+              },
+            };
+          }
+          return n;
+        });
+      }
 
       // Calculate guides during drag
       if (draggingNodeRef.current && guidesEnabled) {
@@ -268,7 +304,12 @@ export function useLogigrammeEditor({
 
       return updated;
     });
-  }, [guidesEnabled]);
+
+    // Commit to history when resize ends
+    if (resizeEnded) {
+      commitToHistory("resize");
+    }
+  }, [guidesEnabled, commitToHistory]);
 
   const onNodeDragStop = useCallback(() => {
     draggingNodeRef.current = null;
@@ -509,13 +550,22 @@ export function useLogigrammeEditor({
     setNodes((prev) =>
       prev.map((n) => {
         if (n.id !== selectedNodeId) return n;
-        return {
+        const newDataStyle = { ...(n.data?.style || {}), ...patch };
+        const result: Node<ShapeNodeData> = {
           ...n,
-          data: {
-            ...n.data,
-            style: { ...(n.data?.style || {}), ...patch },
-          },
+          data: { ...n.data, style: newDataStyle },
         };
+        // Sync width/height to node.style and node.width/height for ReactFlow wrapper
+        if ('width' in patch || 'height' in patch) {
+          result.style = {
+            ...(n.style || {}),
+            ...(patch.width != null ? { width: patch.width } : {}),
+            ...(patch.height != null ? { height: patch.height } : {}),
+          };
+          if (patch.width != null) (result as any).width = patch.width;
+          if (patch.height != null) (result as any).height = patch.height;
+        }
+        return result;
       })
     );
     setDirty(true);
@@ -585,6 +635,77 @@ export function useLogigrammeEditor({
     } finally {
       setSaving(false);
     }
+  }
+
+  // ─── Add node (DnD from palette) ────────────────────────────────────────
+  const addNode = useCallback(
+    (shape: string, label: string, position: { x: number; y: number }) => {
+      const id = `n-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+      const isDiamond = shape === "diamond" || shape === "diamond-x";
+      const w = isDiamond ? 110 : 220;
+      const h = isDiamond ? 110 : 64;
+      const newNode: Node<ShapeNodeData> = {
+        id,
+        type: "shape",
+        position: {
+          x: Math.round(position.x / GRID_SIZE) * GRID_SIZE,
+          y: Math.round(position.y / GRID_SIZE) * GRID_SIZE,
+        },
+        width: w,
+        height: h,
+        style: { width: w, height: h },
+        data: {
+          label,
+          shape: shape as ShapeNodeData["shape"],
+          style: { width: w, height: h },
+          isLinkSource: false,
+        },
+      };
+      setNodes((prev) => [...prev, newNode]);
+      setSelectedNodeId(id);
+      setSelectedEdgeId(null);
+      setDirty(true);
+      commitToHistory("add-node");
+    },
+    [commitToHistory],
+  );
+
+  // ─── Export helpers ─────────────────────────────────────────────────────
+  function exportJSON() {
+    const stored = toStored(nodes, edges, legend);
+    const json = JSON.stringify(stored, null, 2);
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `logigramme-${processId}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    message.success("JSON exporté");
+  }
+
+  function importJSON(file: File) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = JSON.parse(e.target?.result as string);
+        const loadedNodes = (data.nodes || []).map(nodeFromStored);
+        const loadedEdges = (data.edges || [])
+          .map(edgeFromStored)
+          .filter((edge: Edge) => edge.source && edge.target);
+        const loadedLegend = Array.isArray(data.legend) ? data.legend : legend;
+
+        setNodes(loadedNodes);
+        setEdges(loadedEdges);
+        setLegend(loadedLegend);
+        setDirty(true);
+        history.initialize(loadedNodes, loadedEdges);
+        message.success("JSON importé");
+      } catch (err) {
+        message.error("Fichier JSON invalide");
+      }
+    };
+    reader.readAsText(file);
   }
 
   // ─── Return ──────────────────────────────────────────────────────────────
@@ -671,5 +792,10 @@ export function useLogigrammeEditor({
     addLegendItem,
     updateLegendItem,
     deleteLegendItem,
+
+    // DnD + Export/Import
+    addNode,
+    exportJSON,
+    importJSON,
   };
 }

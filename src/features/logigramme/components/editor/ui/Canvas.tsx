@@ -1,4 +1,4 @@
-import { memo, useMemo } from "react";
+import { memo, useCallback, useMemo, useRef } from "react";
 import ReactFlow, {
   Background,
   Controls,
@@ -31,6 +31,7 @@ type CanvasProps = {
   onEdgeClick: (event: React.MouseEvent, edge: Edge) => void;
   onPaneClick: () => void;
   onSelectionChange: (params: { nodes: Node[]; edges: Edge[] }) => void;
+  onDropNode?: (shape: string, label: string, position: { x: number; y: number }) => void;
 };
 
 function Canvas({
@@ -47,12 +48,13 @@ function Canvas({
   onEdgeClick,
   onPaneClick,
   onSelectionChange,
+  onDropNode,
 }: CanvasProps) {
-  // Memoize node/edge types to prevent re-renders
   const nodeTypes = useMemo(() => ({ shape: ShapeNode }), []);
   const edgeTypes = useMemo(() => ({ orthogonal: OrthogonalEdge }), []);
+  const reactFlowWrapper = useRef<HTMLDivElement>(null);
+  const rfInstance = useRef<ReactFlowInstance | null>(null);
 
-  // Edge options based on toggle
   const edgeOptions = useMemo(() => {
     if (orthogonalEdges) {
       return defaultEdgeOptions;
@@ -60,8 +62,43 @@ function Canvas({
     return { ...defaultEdgeOptions, type: "default" };
   }, [orthogonalEdges]);
 
+  const handleInit = useCallback(
+    (instance: ReactFlowInstance) => {
+      rfInstance.current = instance;
+      onInit(instance);
+    },
+    [onInit],
+  );
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+  }, []);
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      const shape = e.dataTransfer.getData("application/logigramme-shape");
+      const label = e.dataTransfer.getData("application/logigramme-label");
+      if (!shape || !onDropNode || !rfInstance.current || !reactFlowWrapper.current) return;
+
+      const bounds = reactFlowWrapper.current.getBoundingClientRect();
+      const position = rfInstance.current.project({
+        x: e.clientX - bounds.left,
+        y: e.clientY - bounds.top,
+      });
+      onDropNode(shape, label, position);
+    },
+    [onDropNode],
+  );
+
   return (
-    <div style={{ height: 680, position: "relative" }}>
+    <div
+      ref={reactFlowWrapper}
+      style={{ height: 680, position: "relative" }}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
+    >
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -71,7 +108,7 @@ function Canvas({
         onNodeDragStop={onNodeDragStop}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
-        onInit={onInit}
+        onInit={handleInit}
         onNodeClick={onNodeClick}
         onEdgeClick={onEdgeClick}
         onPaneClick={onPaneClick}
@@ -87,15 +124,16 @@ function Canvas({
         selectNodesOnDrag
         panOnScroll
         zoomOnScroll
-        deleteKeyCode={null} // We handle delete manually
+        deleteKeyCode={null}
         multiSelectionKeyCode="Shift"
+        edgesFocusable
+        edgesUpdatable
       >
         <Background gap={10} size={1} />
         <Controls />
         <MiniMap />
       </ReactFlow>
 
-      {/* Alignment guides overlay */}
       <AlignmentGuides guides={guides} />
     </div>
   );

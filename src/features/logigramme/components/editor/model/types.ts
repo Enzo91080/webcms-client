@@ -20,6 +20,8 @@ export type StoredEdge = {
   id: string;
   from: string;
   to: string;
+  fromHandle?: string;
+  toHandle?: string;
   label?: string;
   kind?: "orthogonal" | "step" | "smooth";
   color?: string;

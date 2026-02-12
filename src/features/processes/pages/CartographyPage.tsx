@@ -6,9 +6,7 @@ import {
   Grid,
   Row,
   Skeleton,
-  Space,
-  Tooltip,
-  Typography,
+  Tag,
 } from "antd";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
@@ -20,9 +18,8 @@ import {
 
 import { getCartography } from "../../../shared/api";
 import type { CartographyDTO, CartographyItem } from "../../../shared/types/process";
+import CartographyMicroscopeButton from "../components/CartographyMicroscopeButton";
 import "./cartography.css";
-
-const { Title, Text } = Typography;
 
 function displayName(item: CartographyItem): string {
   return item.label || item.process.name;
@@ -30,15 +27,6 @@ function displayName(item: CartographyItem): string {
 
 function isHexColor(v?: string | null) {
   return !!v && /^#[0-9a-fA-F]{6}$/.test(v);
-}
-
-function getContrastText(hex: string | null): string {
-  if (!hex || !isHexColor(hex)) return "#0b1220";
-  const r = parseInt(hex.slice(1, 3), 16) / 255;
-  const g = parseInt(hex.slice(3, 5), 16) / 255;
-  const b = parseInt(hex.slice(5, 7), 16) / 255;
-  const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-  return lum > 0.55 ? "#0b1220" : "#ffffff";
 }
 
 function densityClass(count: number) {
@@ -112,61 +100,55 @@ export default function CartographyPage() {
   return (
     <div className="carto1Page">
       <div className="carto1Shell">
-        <Card className="carto1Hero" bordered={false}>
-          <div className="carto1Header">
-            <div className="carto1HeaderLeft">
-              <Title level={2} className="carto1Title">
-                Cartographie des processus
-              </Title>
-              <Text type="secondary" className="carto1Subtitle">
-                Clique directement sur un chevron pour ouvrir le processus.
-              </Text>
-            </div>
+        <div className="carto1Hero">
+          <div className="carto1HeroIcon">
+            <ApartmentOutlined />
           </div>
-        </Card>
+          <div className="carto1HeroText">
+            <h1 className="carto1Title">Cartographie des processus</h1>
+            <p className="carto1Subtitle">
+              Clique directement sur un chevron pour ouvrir le processus.
+            </p>
+          </div>
+          <div style={{ marginLeft: "auto" }}>
+            <CartographyMicroscopeButton loading={!carto} />
+          </div>
+        </div>
 
-        <Row gutter={[12, 12]} style={{ marginTop: 12 }}>
-          {!isMobile && (
-            <Col xs={24} lg={3}>
-              <Card
-                bordered={false}
-                size="small"
-                className="carto1Card carto1SideCard"
-                title={
-                  <Space size={8}>
-                    <TeamOutlined />
-                    <span>Besoins des parties interressées</span>
-                  </Space>
-                }
-              >
-                {leftStakeholders.length ? (
-                  <div className="carto1StakeList">
-                    {leftStakeholders.map((s) => (
-                      <div key={s.id} className="carto1StakeItem">
-                        <span className="carto1Dot carto1DotBlue" />
-                        <span className="carto1StakeName">{s.name}</span>
-                      </div>
-                    ))}
+        <div className="carto1Main">
+          <Row gutter={[12, 12]} align="middle" style={{ width: "100%" }}>
+            {!isMobile && (
+              <Col xs={24} lg={5}>
+                <div className="carto1SidePanel">
+                  <div className="carto1SideHero">
+                    <div className="carto1SideHeroIcon">
+                      <TeamOutlined />
+                    </div>
+                    <span className="carto1SideHeroTitle">Besoins des Parties Intéressées</span>
                   </div>
-                ) : (
-                  <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Aucun" />
-                )}
-              </Card>
-            </Col>
-          )}
+                  <Card
+                    bordered={false}
+                    size="small"
+                    className="carto1Card carto1SideCard"
+                  >
+                    {leftStakeholders.length ? (
+                      <div className="carto1StakeList">
+                        {leftStakeholders.map((s) => (
+                          <div key={s.id} className="carto1StakeItem">
+                            <span className="carto1Dot carto1DotBlue" />
+                            <span className="carto1StakeName">{s.name}</span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Aucun" />
+                    )}
+                  </Card>
+                </div>
+              </Col>
+            )}
 
-          <Col xs={24} lg={18}>
-            <Card
-              bordered={false}
-              className="carto1Card"
-              title={
-                <Space size={8}>
-                  <ApartmentOutlined />
-                  <span>Chaîne de valeur</span>
-                </Space>
-              }
-              extra={<Text type="secondary">{filteredValueChain.length} élément(s)</Text>}
-            >
+            <Col xs={24} lg={14}>
               <div className={`cartoStageX ${dens}`}>
                 {/* Manager pill au dessus */}
                 {manager ? (
@@ -210,54 +192,98 @@ export default function CartographyPage() {
                 ) : (
                   <div className="cartoChevronChain" role="list" aria-label="Chaîne de valeur">
                     {filteredValueChain.map((it, idx) => {
-                      const bg = isHexColor(it.process.color) ? it.process.color! : "#94a3b8";
-                      const fg = getContrastText(bg);
+                      const borderColor = isHexColor(it.process.color)
+                        ? it.process.color!
+                        : "#94a3b8";
                       return (
-                          <Link
-                            to={`/process/${it.process.code}`}
-                            className="cartoChevronLink"
-                            style={{ zIndex: idx }}
-                            role="listitem"
-                            aria-label={`Ouvrir ${displayName(it)}`}
+                        <Link
+                          key={it.id}
+                          to={`/process/${it.process.code}`}
+                          className="cartoChevronLink"
+                          style={
+                            { 
+                              zIndex: idx, 
+                              "--chevron-color": borderColor
+                            } as React.CSSProperties
+                          }
+                          role="listitem"
+                          aria-label={`Ouvrir ${displayName(it)}`}
+                        >
+                          <div
+                            className={`cartoChevron${idx === 0 ? " cartoChevronFirst" : ""}`}
                           >
-                            <div
-                              className={`cartoChevron${idx === 0 ? " cartoChevronFirst" : ""}`}
-                              style={{ background: bg, color: fg }}
+                            <Tag
+                              
+                              color={borderColor}
+                              className="cartoChevronCode"
+                              style={{ margin: 0, color: "black", fontSize: 10, fontWeight: 800, letterSpacing: "0.06em" }}
                             >
-                              <span className="cartoChevronCode">
-                                {(it.process.code || "").toUpperCase()}
-                              </span>
-                              <span className="cartoChevronName">{displayName(it)}</span>
-                            </div>
-                          </Link>
+                              {(it.process.code || "\u2014").toUpperCase()}
+                            </Tag>
+                            <span className="cartoChevronName" title={displayName(it)}>
+                              {displayName(it)}
+                            </span>
+                          </div>
+                        </Link>
                       );
                     })}
                   </div>
                 )}
               </div>
-            </Card>
 
-            {isMobile && (
-              <Row gutter={[12, 12]} style={{ marginTop: 12 }}>
-                <Col xs={24} md={12}>
-                  <Card bordered={false} size="small" className="carto1Card carto1SideCard" title="Besoins">
-                    {leftStakeholders.length ? (
-                      <div className="carto1StakeList">
-                        {leftStakeholders.map((s) => (
-                          <div key={s.id} className="carto1StakeItem">
-                            <span className="carto1Dot carto1DotBlue" />
-                            <span className="carto1StakeName">{s.name}</span>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Aucun" />
-                    )}
-                  </Card>
-                </Col>
+              {isMobile && (
+                <Row gutter={[12, 12]} style={{ marginTop: 12 }}>
+                  <Col xs={24} md={12}>
+                    <Card bordered={false} size="small" className="carto1Card carto1SideCard" title="Besoins">
+                      {leftStakeholders.length ? (
+                        <div className="carto1StakeList">
+                          {leftStakeholders.map((s) => (
+                            <div key={s.id} className="carto1StakeItem">
+                              <span className="carto1Dot carto1DotBlue" />
+                              <span className="carto1StakeName">{s.name}</span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Aucun" />
+                      )}
+                    </Card>
+                  </Col>
 
-                <Col xs={24} md={12}>
-                  <Card bordered={false} size="small" className="carto1Card carto1SideCard" title="Satisfaction">
+                  <Col xs={24} md={12}>
+                    <Card bordered={false} size="small" className="carto1Card carto1SideCard" title="Satisfaction">
+                      {rightStakeholders.length ? (
+                        <div className="carto1StakeList">
+                          {rightStakeholders.map((s) => (
+                            <div key={s.id} className="carto1StakeItem">
+                              <span className="carto1Dot carto1DotGreen" />
+                              <span className="carto1StakeName">{s.name}</span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Aucun" />
+                      )}
+                    </Card>
+                  </Col>
+                </Row>
+              )}
+            </Col>
+
+            {!isMobile && (
+              <Col xs={24} lg={5}>
+                <div className="carto1SidePanel">
+                  <div className="carto1SideHero">
+                    <div className="carto1SideHeroIcon">
+                      <TeamOutlined />
+                    </div>
+                    <span className="carto1SideHeroTitle">Satisfaction des Parties Intéressées</span>
+                  </div>
+                  <Card
+                    bordered={false}
+                    size="small"
+                    className="carto1Card carto1SideCard"
+                  >
                     {rightStakeholders.length ? (
                       <div className="carto1StakeList">
                         {rightStakeholders.map((s) => (
@@ -271,40 +297,11 @@ export default function CartographyPage() {
                       <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Aucun" />
                     )}
                   </Card>
-                </Col>
-              </Row>
+                </div>
+              </Col>
             )}
-          </Col>
-
-          {!isMobile && (
-            <Col xs={24} lg={3}>
-              <Card
-                bordered={false}
-                size="small"
-                className="carto1Card carto1SideCard "
-                title={
-                  <Space size={8}>
-                    <TeamOutlined />
-                    <span>Satisfaction des PI</span>
-                  </Space>
-                }
-              >
-                {rightStakeholders.length ? (
-                  <div className="carto1StakeList">
-                    {rightStakeholders.map((s) => (
-                      <div key={s.id} className="carto1StakeItem">
-                        <span className="carto1Dot carto1DotGreen" />
-                        <span className="carto1StakeName">{s.name}</span>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Aucun" />
-                )}
-              </Card>
-            </Col>
-          )}
-        </Row>
+          </Row>
+        </div>
       </div>
     </div>
   );

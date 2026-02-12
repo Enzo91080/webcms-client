@@ -10,20 +10,28 @@ export function toStored(
   edges: Edge<OrthogonalEdgeData>[],
   legend: LegendItem[]
 ): { nodes: StoredNode[]; edges: StoredEdge[]; legend: LegendItem[] } {
-  const storedNodes: StoredNode[] = nodes.map((n) => ({
-    id: n.id,
-    sipocRef: n.data?.sipocRef || n.id,
-    shape: n.data?.shape || "rectangle",
-    label: String(n.data?.label || n.id),
-    position: n.position,
-    style: n.data?.style || undefined,
-    interaction: n.data?.interaction || null,
-  }));
+  const storedNodes: StoredNode[] = nodes.map((n) => {
+    // Persist actual node dimensions (from resize) back into style
+    const style = { ...(n.data?.style || {}) };
+    if (n.width && n.width > 0) style.width = Math.round(n.width);
+    if (n.height && n.height > 0) style.height = Math.round(n.height);
+    return {
+      id: n.id,
+      sipocRef: n.data?.sipocRef || n.id,
+      shape: n.data?.shape || "rectangle",
+      label: String(n.data?.label || n.id),
+      position: n.position,
+      style,
+      interaction: n.data?.interaction || null,
+    };
+  });
 
   const storedEdges: StoredEdge[] = edges.map((e, i) => ({
     id: e.id || `e${i + 1}`,
     from: String(e.source),
     to: String(e.target),
+    fromHandle: e.sourceHandle || undefined,
+    toHandle: e.targetHandle || undefined,
     label: String((e as any).label || ""),
     kind: (e.type || "orthogonal") as StoredEdge["kind"],
     color: e.data?.color,
@@ -40,10 +48,15 @@ export function toStored(
  * Convert stored node to ReactFlow node
  */
 export function nodeFromStored(sn: StoredNode): Node<ShapeNodeData> {
+  const w = sn.style?.width;
+  const h = sn.style?.height;
   return {
     id: sn.id,
     type: "shape",
     position: sn.position || { x: 0, y: 0 },
+    ...(w ? { width: w } : {}),
+    ...(h ? { height: h } : {}),
+    style: { width: w || undefined, height: h || undefined },
     data: {
       label: sn.label || sn.id,
       shape: sn.shape || "rectangle",
@@ -67,6 +80,8 @@ export function edgeFromStored(se: StoredEdge | any, index: number): Edge<Orthog
     id: se.id || `e${index + 1}`,
     source: se.from || se.source,
     target: se.to || se.target,
+    sourceHandle: se.fromHandle || undefined,
+    targetHandle: se.toHandle || undefined,
     type: kind,
     markerEnd: { type: MarkerType.ArrowClosed },
     style: { stroke: color, strokeWidth: width },
