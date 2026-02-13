@@ -23,6 +23,10 @@ export function toStored(
       position: n.position,
       style,
       interaction: n.data?.interaction || null,
+      nodeType: (n.type as any) || "shape",
+      locked: n.data?.locked || undefined,
+      zIndex: n.zIndex || undefined,
+      parentId: (n as any).parentNode || undefined,
     };
   });
 
@@ -39,6 +43,9 @@ export function toStored(
     badgeText: e.data?.badgeText,
     badgeColor: e.data?.badgeColor,
     badgeBg: e.data?.badgeBg,
+    arrowStart: e.data?.arrowStart,
+    arrowEnd: e.data?.arrowEnd,
+    labelPosition: e.data?.labelPosition,
   }));
 
   return { nodes: storedNodes, edges: storedEdges, legend };
@@ -50,12 +57,15 @@ export function toStored(
 export function nodeFromStored(sn: StoredNode): Node<ShapeNodeData> {
   const w = sn.style?.width;
   const h = sn.style?.height;
+  const nodeType = sn.nodeType || "shape";
   return {
     id: sn.id,
-    type: "shape",
+    type: nodeType,
     position: sn.position || { x: 0, y: 0 },
     ...(w ? { width: w } : {}),
     ...(h ? { height: h } : {}),
+    ...(sn.zIndex != null ? { zIndex: sn.zIndex } : {}),
+    ...(sn.parentId ? { parentNode: sn.parentId, extent: "parent" as const } : {}),
     style: { width: w || undefined, height: h || undefined },
     data: {
       label: sn.label || sn.id,
@@ -64,6 +74,7 @@ export function nodeFromStored(sn: StoredNode): Node<ShapeNodeData> {
       style: sn.style || undefined,
       interaction: sn.interaction || null,
       isLinkSource: false,
+      locked: sn.locked || undefined,
     },
   };
 }
@@ -91,6 +102,9 @@ export function edgeFromStored(se: StoredEdge | any, index: number): Edge<Orthog
       badgeText: se.badgeText,
       badgeColor: se.badgeColor,
       badgeBg: se.badgeBg,
+      arrowStart: se.arrowStart,
+      arrowEnd: se.arrowEnd,
+      labelPosition: se.labelPosition,
     },
     label: se.label || "",
   } as Edge<OrthogonalEdgeData>;

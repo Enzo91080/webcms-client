@@ -16,3 +16,9 @@ export {
   type AlignDirection,
   type DistributeDirection,
 } from "./align";
+
+// Group commands
+export { groupNodes, ungroupNodes } from "./group";
+
+// Z-index commands
+export { bringToFront, sendToBack, bringForward, sendBackward } from "./zindex";

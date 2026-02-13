@@ -20,12 +20,13 @@ import type {
   OrthogonalEdgeData,
   ShapeNodeData,
 } from "../model/types";
-import { defaultLegend, defaultEdgeOptions, FIT_VIEW_PADDING, GRID_SIZE } from "../model/defaults";
+import { defaultLegend, defaultEdgeOptions, FIT_VIEW_PADDING, GRID_SIZE, getShapeDefaults } from "../model/defaults";
 import { toStored, nodeFromStored, edgeFromStored, createEdge } from "../model/mapping";
 import { hasEdge, safeIdFromRow } from "../lib/ids";
 import { buildFromSipoc, applyAutoLayout } from "../lib/layout";
 import { calculateGuides } from "../lib/guides";
 import { useHistory } from "./useHistory";
+import { useKeyboardShortcuts } from "./useKeyboardShortcuts";
 import {
   copySelection,
   pasteClipboard,
@@ -35,10 +36,15 @@ import {
   distributeNodes,
   canAlign,
   canDistribute,
+  groupNodes,
+  ungroupNodes,
+  bringToFront,
+  sendToBack,
   type ClipboardContent,
   type AlignDirection,
   type DistributeDirection,
 } from "../commands";
+import type { ContextMenuState } from "../ui/ContextMenu";
 import type { Guide } from "../ui/AlignmentGuides";
 
 type UseLogigrammeEditorProps = {
@@ -146,75 +152,7 @@ export function useLogigrammeEditor({
     setNodes((prev) => buildFromSipoc(sipocRows, prev));
   }, [JSON.stringify(sipocRows), autoSync, ready]);
 
-  // ─── Keyboard shortcuts ──────────────────────────────────────────────────
-  useEffect(() => {
-    function onKeyDown(e: KeyboardEvent) {
-      const target = e.target as HTMLElement;
-      const isInput = target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable;
-      if (isInput) return;
 
-      // Escape - exit connect mode / clear selection
-      if (e.key === "Escape") {
-        exitConnectMode();
-        clearSelection();
-        return;
-      }
-
-      // Delete - delete selection
-      if (e.key === "Delete" || e.key === "Backspace") {
-        if (selectedNodeIds.size > 0 || selectedEdgeIds.size > 0) {
-          e.preventDefault();
-          handleDeleteSelection();
-        }
-        return;
-      }
-
-      // Ctrl+Z - Undo
-      if ((e.ctrlKey || e.metaKey) && e.key === "z" && !e.shiftKey) {
-        e.preventDefault();
-        handleUndo();
-        return;
-      }
-
-      // Ctrl+Y or Ctrl+Shift+Z - Redo
-      if ((e.ctrlKey || e.metaKey) && (e.key === "y" || (e.key === "z" && e.shiftKey))) {
-        e.preventDefault();
-        handleRedo();
-        return;
-      }
-
-      // Ctrl+C - Copy
-      if ((e.ctrlKey || e.metaKey) && e.key === "c") {
-        e.preventDefault();
-        handleCopy();
-        return;
-      }
-
-      // Ctrl+V - Paste
-      if ((e.ctrlKey || e.metaKey) && e.key === "v") {
-        e.preventDefault();
-        handlePaste();
-        return;
-      }
-
-      // Ctrl+D - Duplicate
-      if ((e.ctrlKey || e.metaKey) && e.key === "d") {
-        e.preventDefault();
-        handleDuplicate();
-        return;
-      }
-
-      // Ctrl+A - Select all
-      if ((e.ctrlKey || e.metaKey) && e.key === "a") {
-        e.preventDefault();
-        selectAll();
-        return;
-      }
-    }
-
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [nodes, edges, selectedNodeIds, selectedEdgeIds]);
 
   // ─── History helpers ─────────────────────────────────────────────────────
   const commitToHistory = useCallback((reason?: string) => {
@@ -478,6 +416,19 @@ export function useLogigrammeEditor({
     commitToHistory(`distribute-${direction}`);
   }, [selectedNodeIds, commitToHistory]);
 
+  // ─── Keyboard shortcuts (extracted hook) ─────────────────────────────────
+  useKeyboardShortcuts({
+    onEscape: () => { exitConnectMode(); clearSelection(); },
+    onDelete: handleDeleteSelection,
+    onUndo: handleUndo,
+    onRedo: handleRedo,
+    onCopy: handleCopy,
+    onPaste: handlePaste,
+    onDuplicate: handleDuplicate,
+    onSelectAll: selectAll,
+    hasSelection: selectedNodeIds.size > 0 || selectedEdgeIds.size > 0,
+  });
+
   // ─── Legacy actions ──────────────────────────────────────────────────────
   function syncFromSipoc() {
     if (!sipocRows?.length) {
@@ -641,9 +592,7 @@ export function useLogigrammeEditor({
   const addNode = useCallback(
     (shape: string, label: string, position: { x: number; y: number }) => {
       const id = `n-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
-      const isDiamond = shape === "diamond" || shape === "diamond-x";
-      const w = isDiamond ? 110 : 220;
-      const h = isDiamond ? 110 : 64;
+      const { width: w, height: h } = getShapeDefaults(shape);
       const newNode: Node<ShapeNodeData> = {
         id,
         type: "shape",
@@ -707,6 +656,126 @@ export function useLogigrammeEditor({
     };
     reader.readAsText(file);
   }
+
+  // ─── Context menu ──────────────────────────────────────────────────────
+  const [contextMenu, setContextMenu] = useState<ContextMenuState>({ visible: false, x: 0, y: 0 });
+
+  const onNodeContextMenu = useCallback((e: React.MouseEvent, node: Node) => {
+    e.preventDefault();
+    setContextMenu({ visible: true, x: e.clientX, y: e.clientY, nodeId: node.id });
+    // Also select the node
+    if (!node.selected) {
+      setSelectedNodeId(node.id);
+    }
+  }, []);
+
+  const onPaneContextMenu = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setContextMenu({ visible: true, x: e.clientX, y: e.clientY });
+  }, []);
+
+  const closeContextMenu = useCallback(() => {
+    setContextMenu({ visible: false, x: 0, y: 0 });
+  }, []);
+
+  // ─── Group actions ─────────────────────────────────────────────────────
+  const handleGroup = useCallback(() => {
+    if (selectedNodeIds.size < 2) return;
+    const { nodes: newNodes } = groupNodes(nodes, selectedNodeIds);
+    setNodes(newNodes);
+    commitToHistory("group");
+    message.success("Nœuds groupés");
+  }, [nodes, selectedNodeIds, commitToHistory]);
+
+  const handleUngroup = useCallback(() => {
+    const newNodes = ungroupNodes(nodes, selectedNodeIds);
+    setNodes(newNodes);
+    commitToHistory("ungroup");
+    message.success("Dégroupé");
+  }, [nodes, selectedNodeIds, commitToHistory]);
+
+  // ─── Lock actions ──────────────────────────────────────────────────────
+  const handleLock = useCallback(() => {
+    setNodes((prev) =>
+      prev.map((n) =>
+        selectedNodeIds.has(n.id) ? { ...n, draggable: false, data: { ...n.data, locked: true } } : n
+      )
+    );
+    commitToHistory("lock");
+  }, [selectedNodeIds, commitToHistory]);
+
+  const handleUnlock = useCallback(() => {
+    setNodes((prev) =>
+      prev.map((n) =>
+        selectedNodeIds.has(n.id) ? { ...n, draggable: true, data: { ...n.data, locked: false } } : n
+      )
+    );
+    commitToHistory("unlock");
+  }, [selectedNodeIds, commitToHistory]);
+
+  const hasLockedSelection = useMemo(() => {
+    return nodes.some((n) => selectedNodeIds.has(n.id) && n.data?.locked);
+  }, [nodes, selectedNodeIds]);
+
+  // ─── Z-index actions ───────────────────────────────────────────────────
+  const handleBringToFront = useCallback(() => {
+    setNodes((prev) => bringToFront(prev, selectedNodeIds));
+    commitToHistory("z-front");
+  }, [selectedNodeIds, commitToHistory]);
+
+  const handleSendToBack = useCallback(() => {
+    setNodes((prev) => sendToBack(prev, selectedNodeIds));
+    commitToHistory("z-back");
+  }, [selectedNodeIds, commitToHistory]);
+
+  // ─── Add pool/lane ────────────────────────────────────────────────────
+  const addPool = useCallback(
+    (position: { x: number; y: number }) => {
+      const id = `pool-${Date.now()}`;
+      const w = 600;
+      const h = 300;
+      const newNode: Node<any> = {
+        id,
+        type: "pool",
+        position: {
+          x: Math.round(position.x / GRID_SIZE) * GRID_SIZE,
+          y: Math.round(position.y / GRID_SIZE) * GRID_SIZE,
+        },
+        width: w,
+        height: h,
+        style: { width: w, height: h },
+        data: { label: "Pool", style: { width: w, height: h } },
+        zIndex: -1,
+      };
+      setNodes((prev) => [...prev, newNode]);
+      setDirty(true);
+      commitToHistory("add-pool");
+    },
+    [commitToHistory],
+  );
+
+  const addLane = useCallback(
+    (poolId: string, position: { x: number; y: number }) => {
+      const id = `lane-${Date.now()}`;
+      const w = 570;
+      const h = 140;
+      const newNode: Node<any> = {
+        id,
+        type: "lane",
+        position,
+        parentNode: poolId,
+        extent: "parent" as const,
+        width: w,
+        height: h,
+        style: { width: w, height: h },
+        data: { label: "Lane", style: { width: w, height: h } },
+      };
+      setNodes((prev) => [...prev, newNode]);
+      setDirty(true);
+      commitToHistory("add-lane");
+    },
+    [commitToHistory],
+  );
 
   // ─── Return ──────────────────────────────────────────────────────────────
   return {
@@ -797,5 +866,28 @@ export function useLogigrammeEditor({
     addNode,
     exportJSON,
     importJSON,
+
+    // Context menu
+    contextMenu,
+    onNodeContextMenu,
+    onPaneContextMenu,
+    closeContextMenu,
+
+    // Group actions
+    group: handleGroup,
+    ungroup: handleUngroup,
+
+    // Lock actions
+    lock: handleLock,
+    unlock: handleUnlock,
+    hasLockedSelection,
+
+    // Z-index actions
+    bringToFront: handleBringToFront,
+    sendToBack: handleSendToBack,
+
+    // Pool/Lane
+    addPool,
+    addLane,
   };
 }

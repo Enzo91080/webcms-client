@@ -1,4 +1,5 @@
 import type { Node, Edge } from "reactflow";
+import type { Shape } from "../../../../../shared/types";
 
 // Re-export domain types
 export type { Shape, LogiNode, LogiEdge } from "../../../../../shared/types";
@@ -6,15 +7,23 @@ export type { Shape, LogiNode, LogiEdge } from "../../../../../shared/types";
 /**
  * Stored format (persisted to DB)
  */
+export type NodeType = "shape" | "pool" | "lane" | "group";
+
 export type StoredNode = {
   id: string;
   sipocRef?: string;
-  shape?: "rectangle" | "diamond" | "circle" | "diamond-x";
+  shape?: Shape;
   label?: string;
   position?: { x: number; y: number };
   style?: NodeStyle;
   interaction?: NodeInteraction | null;
+  nodeType?: NodeType;
+  locked?: boolean;
+  zIndex?: number;
+  parentId?: string;
 };
+
+export type ArrowheadStyle = "none" | "arrow" | "arrowclosed" | "diamond" | "circle";
 
 export type StoredEdge = {
   id: string;
@@ -29,6 +38,9 @@ export type StoredEdge = {
   badgeText?: string;
   badgeColor?: string;
   badgeBg?: string;
+  arrowStart?: ArrowheadStyle;
+  arrowEnd?: ArrowheadStyle;
+  labelPosition?: number; // 0..1, default 0.5
 };
 
 export type LegendItem = {
@@ -48,6 +60,9 @@ export type NodeStyle = {
   width?: number;
   height?: number;
   fontSize?: number;
+  borderRadius?: number;
+  shadow?: boolean;
+  opacity?: number; // 0..1
 };
 
 /**
@@ -66,11 +81,30 @@ export type NodeInteraction = {
  */
 export type ShapeNodeData = {
   label: string;
-  shape: "rectangle" | "diamond" | "circle" | "diamond-x";
+  shape: Shape;
   sipocRef?: string;
   style?: NodeStyle;
   interaction?: NodeInteraction | null;
   isLinkSource?: boolean;
+  locked?: boolean;
+};
+
+export type PoolNodeData = {
+  label: string;
+  style?: NodeStyle;
+  locked?: boolean;
+};
+
+export type LaneNodeData = {
+  label: string;
+  style?: NodeStyle;
+  locked?: boolean;
+};
+
+export type GroupNodeData = {
+  label: string;
+  style?: NodeStyle;
+  locked?: boolean;
 };
 
 /**
@@ -82,6 +116,9 @@ export type OrthogonalEdgeData = {
   badgeText?: string;
   badgeColor?: string;
   badgeBg?: string;
+  arrowStart?: ArrowheadStyle;
+  arrowEnd?: ArrowheadStyle;
+  labelPosition?: number;
 };
 
 /**

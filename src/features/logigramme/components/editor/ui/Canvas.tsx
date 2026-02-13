@@ -12,6 +12,9 @@ import ReactFlow, {
   SelectionMode,
 } from "reactflow";
 import ShapeNode from "../../nodes/ShapeNode";
+import PoolNode from "../../nodes/PoolNode";
+import LaneNode from "../../nodes/LaneNode";
+import GroupNode from "../../nodes/GroupNode";
 import OrthogonalEdge from "../../edges/OrthogonalEdge";
 import AlignmentGuides, { type Guide } from "./AlignmentGuides";
 import { defaultEdgeOptions, SNAP_GRID, MIN_ZOOM, MAX_ZOOM } from "../model/defaults";
@@ -32,6 +35,8 @@ type CanvasProps = {
   onPaneClick: () => void;
   onSelectionChange: (params: { nodes: Node[]; edges: Edge[] }) => void;
   onDropNode?: (shape: string, label: string, position: { x: number; y: number }) => void;
+  onNodeContextMenu?: (event: React.MouseEvent, node: Node) => void;
+  onPaneContextMenu?: (event: React.MouseEvent) => void;
 };
 
 function Canvas({
@@ -49,8 +54,15 @@ function Canvas({
   onPaneClick,
   onSelectionChange,
   onDropNode,
+  onNodeContextMenu,
+  onPaneContextMenu,
 }: CanvasProps) {
-  const nodeTypes = useMemo(() => ({ shape: ShapeNode }), []);
+  const nodeTypes = useMemo(() => ({
+    shape: ShapeNode,
+    pool: PoolNode,
+    lane: LaneNode,
+    group: GroupNode,
+  }), []);
   const edgeTypes = useMemo(() => ({ orthogonal: OrthogonalEdge }), []);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const rfInstance = useRef<ReactFlowInstance | null>(null);
@@ -113,6 +125,8 @@ function Canvas({
         onEdgeClick={onEdgeClick}
         onPaneClick={onPaneClick}
         onSelectionChange={onSelectionChange}
+        onNodeContextMenu={onNodeContextMenu}
+        onPaneContextMenu={onPaneContextMenu}
         fitView
         snapToGrid
         snapGrid={SNAP_GRID}

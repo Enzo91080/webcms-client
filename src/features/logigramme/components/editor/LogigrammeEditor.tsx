@@ -1,8 +1,9 @@
 import type { SipocRow } from "../../../../shared/types";
 import { useLogigrammeEditor } from "./state/useLogigrammeEditor";
-import Toolbar from "./ui/Toolbar";
+import ToolbarTabs from "./ui/ToolbarTabs";
 import Canvas from "./ui/Canvas";
 import ShapePalette from "./ui/ShapePalette";
+import ContextMenu from "./ui/ContextMenu";
 
 type LogigrammeEditorProps = {
   processId: string;
@@ -25,7 +26,7 @@ export default function LogigrammeEditor({
   });
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "150px 1fr", gap: 0 }}>
+    <div style={{ display: "grid", gridTemplateColumns: "200px 1fr", gap: 0 }}>
       {/* Palette de formes (DnD) */}
       <div
         style={{
@@ -39,13 +40,16 @@ export default function LogigrammeEditor({
 
       {/* Toolbar + Canvas */}
       <div style={{ overflow: "hidden", background: "#fff" }}>
-        <Toolbar
+        <ToolbarTabs
+          nodes={editor.nodes}
+          edges={editor.edges}
           autoSync={editor.autoSync}
           saving={editor.saving}
           dirty={editor.dirty}
           selectedCount={editor.selectedCount}
           guidesEnabled={editor.guidesEnabled}
           orthogonalEdges={editor.orthogonalEdges}
+          connectMode={editor.connectMode}
           selectedNode={editor.selectedNode}
           selectedEdge={editor.selectedEdge}
           canUndo={editor.canUndo}
@@ -70,6 +74,7 @@ export default function LogigrammeEditor({
           onSave={editor.save}
           onExportJSON={editor.exportJSON}
           onImportJSON={editor.importJSON}
+          onToggleConnectMode={editor.toggleConnectMode}
           onUpdateNode={editor.updateSelectedNode}
           onUpdateNodeStyle={editor.updateSelectedNodeStyle}
           onUpdateEdge={editor.updateSelectedEdge}
@@ -91,8 +96,27 @@ export default function LogigrammeEditor({
           onPaneClick={editor.onPaneClick}
           onSelectionChange={editor.onSelectionChange}
           onDropNode={editor.addNode}
+          onNodeContextMenu={editor.onNodeContextMenu}
+          onPaneContextMenu={editor.onPaneContextMenu}
         />
       </div>
+
+      {/* Context Menu */}
+      <ContextMenu
+        state={editor.contextMenu}
+        onClose={editor.closeContextMenu}
+        selectedCount={editor.selectedCount}
+        hasLockedSelection={editor.hasLockedSelection}
+        onCopy={editor.copy}
+        onDuplicate={editor.duplicate}
+        onDelete={editor.deleteSelection}
+        onGroup={editor.group}
+        onUngroup={editor.ungroup}
+        onLock={editor.lock}
+        onUnlock={editor.unlock}
+        onBringToFront={editor.bringToFront}
+        onSendToBack={editor.sendToBack}
+      />
     </div>
   );
 }

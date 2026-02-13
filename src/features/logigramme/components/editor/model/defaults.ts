@@ -1,5 +1,6 @@
 import { MarkerType } from "reactflow";
 import type { LegendItem } from "./types";
+import { getShapeDef } from "../../nodes/shapes";
 
 /**
  * Default legend items
@@ -43,3 +44,11 @@ export const SNAP_GRID: [number, number] = [GRID_SIZE, GRID_SIZE];
 export const MIN_ZOOM = 0.2;
 export const MAX_ZOOM = 2;
 export const FIT_VIEW_PADDING = 0.18;
+
+/**
+ * Get default width/height for a shape from the registry
+ */
+export function getShapeDefaults(shape: string): { width: number; height: number } {
+  const def = getShapeDef(shape);
+  return { width: def.defaultWidth, height: def.defaultHeight };
+}

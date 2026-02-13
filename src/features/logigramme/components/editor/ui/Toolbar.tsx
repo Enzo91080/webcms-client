@@ -21,6 +21,7 @@ import { toPng } from "html-to-image";
 import type { Node, Edge } from "reactflow";
 import type { ShapeNodeData, OrthogonalEdgeData } from "../model/types";
 import type { AlignDirection, DistributeDirection } from "../commands";
+import { getAllShapes } from "../../nodes/shapes";
 
 type ToolbarProps = {
   autoSync: boolean;
@@ -206,15 +207,12 @@ function Toolbar(props: ToolbarProps) {
           <L>Forme</L>
           <Select
             size="small"
-            style={{ width: 110 }}
+            style={{ width: 160 }}
             value={String(nd?.shape || "rectangle")}
             onChange={(v) => onUpdateNode({ shape: v as any })}
-            options={[
-              { value: "rectangle", label: "Rectangle" },
-              { value: "diamond", label: "Losange" },
-              { value: "circle", label: "Cercle" },
-              { value: "diamond-x", label: "Losange ✕" },
-            ]}
+            showSearch
+            optionFilterProp="label"
+            options={getAllShapes().map((s) => ({ value: s.key, label: s.label }))}
           />
 
           <Divider type="vertical" style={{ margin: "0 2px" }} />

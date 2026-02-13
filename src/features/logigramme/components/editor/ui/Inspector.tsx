@@ -15,6 +15,8 @@ import {
 import { memo } from "react";
 import type { Node, Edge } from "reactflow";
 import type { LegendItem, ShapeNodeData, OrthogonalEdgeData } from "../model/types";
+import { getAllShapes, getShapeDef } from "../../nodes/shapes";
+import type { NodeInteraction } from "../model/types";
 
 type InspectorProps = {
   selectedNode: Node<ShapeNodeData> | null;
@@ -184,6 +186,14 @@ function PropertiesPanel({
   onUpdateEdge,
 }: PropertiesPanelProps) {
   if (selectedNode) {
+    const shapeDef = getShapeDef(selectedNode.data?.shape || "rectangle");
+    const interaction = selectedNode.data?.interaction;
+
+    const updateInteraction = (patch: Partial<NodeInteraction>) => {
+      const current = interaction || { action: "navigate" as const, targetType: "process" as const };
+      onUpdateNode({ interaction: { ...current, ...patch } });
+    };
+
     return (
       <Collapse
         defaultActiveKey={["basics", "style"]}
@@ -199,19 +209,19 @@ function PropertiesPanel({
                     onChange={(e) => onUpdateNode({ label: e.target.value })}
                   />
                 </Form.Item>
-                <Form.Item label="Forme" style={{ marginBottom: 0 }}>
+                <Form.Item label="Forme" style={{ marginBottom: 10 }}>
                   <Select
                     value={String(selectedNode.data?.shape || "rectangle")}
                     onChange={(v) => onUpdateNode({ shape: v as any })}
-                    options={[
-                      { value: "rectangle", label: "Rectangle" },
-                      { value: "diamond", label: "Losange" },
-                      { value: "circle", label: "Cercle" },
-                      { value: "diamond-x", label: "Losange ✕" },
-                    ]}
+                    showSearch
+                    optionFilterProp="label"
+                    options={getAllShapes().map((s) => ({ value: s.key, label: s.label }))}
                   />
                 </Form.Item>
-                <div style={{ marginTop: 10, fontSize: 12, opacity: 0.7 }}>
+                <div style={{ fontSize: 11, color: "#64748b", padding: "4px 0", borderTop: "1px solid #f0f0f0" }}>
+                  Catégorie : <b>{shapeDef.category}</b> — Taille par défaut : {shapeDef.defaultWidth}×{shapeDef.defaultHeight}
+                </div>
+                <div style={{ marginTop: 6, fontSize: 12, opacity: 0.7 }}>
                   Lié à <b>SIPOC.ref</b>. Ajoute une étape dans SIPOC puis sync.
                 </div>
               </Form>
@@ -232,18 +242,18 @@ function PropertiesPanel({
                   <Form.Item label="Largeur" style={{ marginBottom: 0 }}>
                     <InputNumber
                       style={{ width: "100%" }}
-                      min={120}
+                      min={40}
                       max={520}
-                      value={Number(selectedNode.data?.style?.width || 220)}
+                      value={Number(selectedNode.data?.style?.width || shapeDef.defaultWidth)}
                       onChange={(v) => onUpdateNodeStyle({ width: v })}
                     />
                   </Form.Item>
                   <Form.Item label="Hauteur" style={{ marginBottom: 0 }}>
                     <InputNumber
                       style={{ width: "100%" }}
-                      min={50}
+                      min={40}
                       max={360}
-                      value={Number(selectedNode.data?.style?.height || 80)}
+                      value={Number(selectedNode.data?.style?.height || shapeDef.defaultHeight)}
                       onChange={(v) => onUpdateNodeStyle({ height: v })}
                     />
                   </Form.Item>
@@ -296,6 +306,73 @@ function PropertiesPanel({
                     />
                   </Form.Item>
                 </div>
+              </Form>
+            ),
+          },
+          {
+            key: "interaction",
+            label: "Interaction",
+            children: (
+              <Form layout="vertical">
+                <Form.Item label="Action au clic" style={{ marginBottom: 10 }}>
+                  <Select
+                    value={interaction?.action || "none"}
+                    onChange={(v) => {
+                      if (v === "none") {
+                        onUpdateNode({ interaction: null });
+                      } else {
+                        updateInteraction({ action: v as NodeInteraction["action"] });
+                      }
+                    }}
+                    options={[
+                      { value: "none", label: "Aucune" },
+                      { value: "navigate", label: "Naviguer" },
+                      { value: "open", label: "Ouvrir (nouvel onglet)" },
+                      { value: "tooltip", label: "Tooltip" },
+                    ]}
+                  />
+                </Form.Item>
+                {interaction && interaction.action !== "tooltip" && (
+                  <>
+                    <Form.Item label="Type de cible" style={{ marginBottom: 10 }}>
+                      <Select
+                        value={interaction.targetType || "process"}
+                        onChange={(v) => updateInteraction({ targetType: v as NodeInteraction["targetType"] })}
+                        options={[
+                          { value: "process", label: "Processus" },
+                          { value: "url", label: "URL externe" },
+                        ]}
+                      />
+                    </Form.Item>
+                    {interaction.targetType === "process" && (
+                      <Form.Item label="ID Processus cible" style={{ marginBottom: 0 }}>
+                        <Input
+                          value={interaction.targetProcessId || ""}
+                          onChange={(e) => updateInteraction({ targetProcessId: e.target.value })}
+                          placeholder="ex: P-001"
+                        />
+                      </Form.Item>
+                    )}
+                    {interaction.targetType === "url" && (
+                      <Form.Item label="URL cible" style={{ marginBottom: 0 }}>
+                        <Input
+                          value={interaction.targetUrl || ""}
+                          onChange={(e) => updateInteraction({ targetUrl: e.target.value })}
+                          placeholder="https://..."
+                        />
+                      </Form.Item>
+                    )}
+                  </>
+                )}
+                {interaction?.action === "tooltip" && (
+                  <Form.Item label="Texte du tooltip" style={{ marginBottom: 0 }}>
+                    <Input.TextArea
+                      rows={3}
+                      value={interaction.tooltip || ""}
+                      onChange={(e) => updateInteraction({ tooltip: e.target.value })}
+                    />
+                  </Form.Item>
+                )}
               </Form>
             ),
           },
